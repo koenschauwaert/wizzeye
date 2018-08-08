@@ -1,0 +1,12 @@
+[Unit]
+Description=Wizzeye server
+After=network.target
+
+[Service]
+RootDirectory=/opt/wizzeye
+ExecStart=/wizzeye-server
+User=wizzeye
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
