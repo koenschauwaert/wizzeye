@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">Wizzeye</string>
+
+    <!-- Menu items -->
+    <string name="menu_settings">Settings</string>
+    <string name="menu_share_link">Share link</string>
+
+    <!-- Preferences -->
+    <string name="pref_server_title">Server</string>
+    <string name="pref_server_default" translatable="false">https://wizzeye.app/</string>
+
+    <!-- States -->
+    <string name="state_idle">Idle</string>
+    <string name="state_error">Error</string>
+    <string name="state_waiting_for_network">Waiting for network connectivity</string>
+    <string name="state_connecting_to_server">Connecting to Wizzeye server</string>
+    <string name="state_waiting_for_headset">Waiting for Iristick smart glasses</string>
+    <string name="state_waiting_for_observer">Waiting for remote observer to join</string>
+    <string name="state_establishing">Establishing video connection</string>
+    <string name="state_call_in_progress">Call in progress</string>
+
+    <!-- Errors -->
+    <string name="error_server_unreachable">Could not reach Wizzeye server.</string>
+    <string name="error_services_not_installed">Iristick Services are not installed.</string>
+    <string name="error_services_outdated">Please update Iristick Services.</string>
+    <string name="error_services_unknown">Unknown error in Iristick Services.</string>
+    <string name="error_room_busy">Another glass wearer has already joined the room.</string>
+    <string name="error_signaling">Unknown error while communicating with the Wizzeye server.</string>
+    <string name="error_webrtc">Unknown error while setting up video communication.</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">Ongoing call</string>
+    <string name="notif_channel_description">Information about ongoing call</string>
+
+    <!-- Common labels -->
+    <string name="hangup">Hangup</string>
+
+    <!-- PermissionsFragment -->
+    <string name="permissions_grant">Grant permissions</string>
+
+    <!-- RoomSelectionFragment -->
+    <string name="roomselection_join">Join room</string>
+</resources>
