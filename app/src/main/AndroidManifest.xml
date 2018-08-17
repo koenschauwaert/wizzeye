@@ -30,8 +30,8 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".SettingsActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".LogsActivity" />
 
         <service
             android:name=".call.CallService"

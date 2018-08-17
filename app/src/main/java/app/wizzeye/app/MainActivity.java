@@ -108,6 +108,9 @@ public class MainActivity extends Activity implements ServiceConnection, CallSer
         case R.id.settings:
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        case R.id.logs:
+            startActivity(new Intent(this, LogsActivity.class));
+            return true;
         default:
             return super.onOptionsItemSelected(item);
         }
