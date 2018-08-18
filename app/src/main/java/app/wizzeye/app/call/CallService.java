@@ -136,8 +136,10 @@ public class CallService extends Service {
     public String getRoomLink() {
         String url = mPreferences.getString(SettingsActivity.KEY_SERVER,
             getString(R.string.pref_server_default));
+        if (!url.endsWith("/"))
+            url += "/";
         if (mRoom != null)
-            url += "#" + mRoom;
+            url += mRoom;
         return url;
     }
 
