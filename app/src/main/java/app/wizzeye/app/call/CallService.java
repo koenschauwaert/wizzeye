@@ -31,6 +31,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -68,7 +69,6 @@ import java.util.concurrent.Future;
 
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
-import app.wizzeye.app.SettingsActivity;
 
 public class CallService extends Service {
 
@@ -81,8 +81,6 @@ public class CallService extends Service {
     public interface Listener {
         void onCallStateChanged(CallState newState);
     }
-
-    public static final String EXTRA_ROOM = "room";
 
     private static final String TAG = "CallService";
     private static final String NOTIFICATION_CHANNEL = "ongoing";
@@ -99,7 +97,7 @@ public class CallService extends Service {
     private CallState mState = CallState.IDLE;
     private CallError mError;
 
-    private String mRoom;
+    private Uri mUri;
     private ConnectivityManager.NetworkCallback mNetworkMonitor;
     private Future<WebSocket> mFutureSocket;
     private SignalingProtocol mSignal;
@@ -134,13 +132,16 @@ public class CallService extends Service {
     }
 
     public String getRoomLink() {
-        String url = mPreferences.getString(SettingsActivity.KEY_SERVER,
-            getString(R.string.pref_server_default));
-        if (!url.endsWith("/"))
-            url += "/";
-        if (mRoom != null)
-            url += mRoom;
-        return url;
+        return mUri != null ? mUri.toString() : "";
+    }
+
+    public String getRoomName() {
+        if (mUri == null)
+            return "";
+        String name = mUri.getPath();
+        name = name.replaceAll("^/+", "");
+        name = name.replaceAll("/+$", "");
+        return name;
     }
 
     public EglBase getEglBase() {
@@ -304,7 +305,7 @@ public class CallService extends Service {
             mConnectivityManager.unregisterNetworkCallback(mNetworkMonitor);
             mNetworkMonitor = null;
         }
-        mRoom = null;
+        mUri = null;
 
         if (limit.ordinal() >= CallState.ERROR.ordinal())
             return;
@@ -321,22 +322,22 @@ public class CallService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String room = intent.getStringExtra(EXTRA_ROOM);
-        Log.i(TAG, "onStart(room=" + room + ")");
+        Uri uri = intent.getData();
+        Log.i(TAG, "onStart(" + uri + ")");
 
         if (mState != CallState.IDLE) {
             Log.w(TAG, "Call in progress, ignoring start request");
             return START_NOT_STICKY;
         }
-        if (room == null || room.isEmpty()) {
-            Log.e(TAG, "Got empty room name");
+        if (uri == null || uri.getPathSegments().isEmpty()) {
+            Log.e(TAG, "Missing room name");
             stopSelf();
             return START_NOT_STICKY;
         }
 
         startForeground(NOTIFICATION_ID, buildNotification());
 
-        mRoom = room;
+        mUri = uri;
         startNetworkMonitor();
         setState(CallState.WAITING_FOR_NETWORK);
 
@@ -355,10 +356,9 @@ public class CallService extends Service {
                     return;
 
                 // Connect to server through websocket
-                String url = mPreferences.getString(SettingsActivity.KEY_SERVER,
-                    getString(R.string.pref_server_default));
-                url += (url.endsWith("/") ? "ws" : "/ws");
-                mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(url, "v1", mSocketConnectCallback);
+                mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
+                    mUri.buildUpon().path("/ws").build().toString(),
+                    "v1", mSocketConnectCallback);
 
                 setState(CallState.CONNECTING_TO_SERVER);
             }
@@ -401,7 +401,7 @@ public class CallService extends Service {
         @Override
         public void onHeadsetConnected(Headset headset) {
             mHeadset = headset;
-            mSignal.join(mRoom);
+            mSignal.join(getRoomName());
             setState(CallState.WAITING_FOR_OBSERVER);
         }
 

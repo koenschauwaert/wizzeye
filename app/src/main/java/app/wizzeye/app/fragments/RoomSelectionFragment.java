@@ -21,13 +21,17 @@
 package app.wizzeye.app.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 
 import app.wizzeye.app.R;
+import app.wizzeye.app.SettingsActivity;
 import app.wizzeye.app.call.CallService;
 
 public class RoomSelectionFragment extends BaseFragment {
@@ -43,8 +47,10 @@ public class RoomSelectionFragment extends BaseFragment {
     }
 
     private void joinRoom() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        Uri server = Uri.parse(prefs.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
         getMainActivity().startService(new Intent(getMainActivity(), CallService.class)
-            .putExtra(CallService.EXTRA_ROOM, mRoom.getText().toString()));
+            .setData(Uri.withAppendedPath(server, Uri.encode(mRoom.getText().toString()))));
     }
 
 }
