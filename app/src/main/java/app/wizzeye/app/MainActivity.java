@@ -57,12 +57,36 @@ public class MainActivity extends Activity implements ServiceConnection, CallSer
         super.onCreate(savedInstanceState);
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntent(intent);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    private boolean hasAllPermissions() {
+        for (String p : PERMISSIONS) {
+            if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED)
+                return false;
+        }
+        return true;
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent != null &&
+                Intent.ACTION_VIEW.equals(intent.getAction()) &&
+                hasAllPermissions()) {
+            startService(new Intent(this, CallService.class)
+                .setData(intent.getData()));
+        }
     }
 
     private void showFragment(BaseFragment fragment) {
@@ -121,14 +145,7 @@ public class MainActivity extends Activity implements ServiceConnection, CallSer
      * If we have all permissions, proceed with startup, else show {@link PermissionsFragment}.
      */
     public void checkPermissions() {
-        boolean granted = true;
-        for (String p : PERMISSIONS) {
-            if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {
-                granted = false;
-                break;
-            }
-        }
-        if (!granted) {
+        if (!hasAllPermissions()) {
             // Show permissions fragment
             showFragment(new PermissionsFragment());
         } else if (!mBound) {
