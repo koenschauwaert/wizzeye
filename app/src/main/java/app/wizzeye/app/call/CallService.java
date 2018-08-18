@@ -90,6 +90,7 @@ public class CallService extends Service {
     private final List<Listener> mListeners = new LinkedList<>();
 
     private SharedPreferences mPreferences;
+    private NotificationManager mNotificationManager;
     private ConnectivityManager mConnectivityManager;
     private Handler mHandler;
     private EglBase mEglBase;
@@ -174,6 +175,8 @@ public class CallService extends Service {
     private void setState(CallState newState) {
         Log.i(TAG, "Switching to state " + newState);
         mState = newState;
+        if (mState.ordinal() > CallState.IDLE.ordinal())
+            mNotificationManager.notify(NOTIFICATION_ID, buildNotification());
         for (Listener l : mListeners)
             l.onCallStateChanged(newState);
     }
@@ -181,7 +184,7 @@ public class CallService extends Service {
     private Notification buildNotification() {
         Notification.Builder builder = new Notification.Builder(this);
         builder.setSmallIcon(R.drawable.ic_launcher_foreground);
-        builder.setContentTitle(getString(R.string.app_name));
+        builder.setContentTitle(getString(mState.title));
         builder.setContentIntent(PendingIntent.getActivity(this, 0,
             new Intent(this, MainActivity.class), 0));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -208,6 +211,7 @@ public class CallService extends Service {
     public void onCreate() {
         super.onCreate();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mNotificationManager = getSystemService(NotificationManager.class);
         mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         mHandler = new Handler();
 
@@ -222,8 +226,7 @@ public class CallService extends Service {
                 getString(R.string.notif_channel_name),
                 NotificationManager.IMPORTANCE_LOW);
             channel.setDescription(getString(R.string.notif_channel_description));
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            mNotificationManager.createNotificationChannel(channel);
         }
     }
 
