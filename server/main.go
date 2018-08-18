@@ -28,6 +28,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var webroot = flag.String("webroot", "webroot", "web root directory")
@@ -73,7 +74,16 @@ func main() {
 	http.HandleFunc("/ws", func(rw http.ResponseWriter, req *http.Request) {
 		websocketHandler(rw, req.WithContext(ctx))
 	})
-	http.Handle("/", http.FileServer(http.Dir(*webroot)))
+	fs := http.FileServer(http.Dir(*webroot))
+	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+		switch {
+		case req.URL.Path == "/":
+		case strings.HasPrefix(req.URL.Path, "/s/"):
+		default:
+			req.URL.Path = "/room.html"
+		}
+		fs.ServeHTTP(rw, req)
+	})
 	log.Print("Listening on ", Cfg.Listen)
 	log.Fatal(http.ListenAndServe(Cfg.Listen, nil))
 }

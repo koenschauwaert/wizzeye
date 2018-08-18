@@ -46,8 +46,7 @@ function create_pc() {
 }
 
 var ws = new WebSocket(location.protocol.replace('http', 'ws') + '//' +
-                       location.host + location.pathname.replace(/\/$/, '') +
-                       '/ws', 'v1');
+                       location.host + '/ws', 'v1');
 
 function send(msg) {
   console.log("Sending", msg);
@@ -62,7 +61,7 @@ var join_scheduled = false;
 
 function join_room() {
   join_scheduled = false;
-  var room = location.hash.substr(1);
+  var room = location.pathname.replace(/^\/*(.*?)\/*$/, '$1');
   if (room != '') {
     send({type: 'join', room: room, role: role});
   }
