@@ -59,12 +59,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	LogConn(ctx, "Disconnected")
 }
 
-func middleware(ctx context.Context, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
-}
-
 func main() {
 	flag.Parse()
 	if os.Getenv("JOURNAL_STREAM") != "" {
@@ -76,7 +70,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = ContextWithNewRouter(ctx)
-	http.Handle("/ws", middleware(ctx, http.HandlerFunc(websocketHandler)))
+	http.HandleFunc("/ws", func(rw http.ResponseWriter, req *http.Request) {
+		websocketHandler(rw, req.WithContext(ctx))
+	})
 	http.Handle("/", http.FileServer(http.Dir(*webroot)))
 	log.Print("Listening on ", Cfg.Listen)
 	log.Fatal(http.ListenAndServe(Cfg.Listen, nil))
