@@ -457,6 +457,10 @@ public class CallService extends Service {
                 Log.i(TAG, "A glass-wearer is already present in the room");
                 setError(CallError.ROOM_BUSY);
                 break;
+            case ERROR_BAD_ROOM:
+                Log.i(TAG, "Invalid room name");
+                setError(CallError.INVALID_ROOM);
+                break;
             default:
                 Log.e(TAG, "Signaling error " + code + ": " + text);
                 setError(CallError.SIGNALING);

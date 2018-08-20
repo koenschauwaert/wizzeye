@@ -29,6 +29,7 @@ public enum CallError {
     SERVICES_NOT_INSTALLED(R.string.error_services_not_installed),
     SERVICES_OUTDATED(R.string.error_services_outdated),
     SERVICES_UNKNOWN(R.string.error_services_unknown),
+    INVALID_ROOM(R.string.error_invalid_room),
     ROOM_BUSY(R.string.error_room_busy),
     SIGNALING(R.string.error_signaling),
     WEBRTC(R.string.error_webrtc),

@@ -36,6 +36,7 @@ class SignalingProtocol {
         int ERROR_BAD_MESSAGE = 2;
         int ERROR_NO_ROOM = 3;
         int ERROR_ROLE_TAKEN = 4;
+        int ERROR_BAD_ROOM = 5;
 
         void onError(int code, String text);
         void onJoin(String room, String role);

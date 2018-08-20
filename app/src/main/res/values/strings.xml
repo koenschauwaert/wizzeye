@@ -27,6 +27,7 @@
     <string name="error_services_not_installed">Iristick Services are not installed.</string>
     <string name="error_services_outdated">Please update Iristick Services.</string>
     <string name="error_services_unknown">Unknown error in Iristick Services.</string>
+    <string name="error_invalid_room">The chosen room name is not valid.</string>
     <string name="error_room_busy">Another glass wearer has already joined the room.</string>
     <string name="error_signaling">Unknown error while communicating with the Wizzeye server.</string>
     <string name="error_webrtc">Unknown error while setting up video communication.</string>
