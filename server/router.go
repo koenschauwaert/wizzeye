@@ -23,7 +23,11 @@ package main
 
 import (
 	"context"
+	"regexp"
+	"strings"
 )
+
+var roomNameRegexp = regexp.MustCompile(`^[-_a-z0-9]{5,64}$`)
 
 type Room struct {
 	Name  string
@@ -102,6 +106,11 @@ func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {
 	case GlassWearerRole, ObserverRole:
 	default:
 		c.SendError(ctx, ErrBadMessage)
+		return
+	}
+	name = strings.ToLower(name)
+	if !roomNameRegexp.MatchString(name) {
+		c.SendError(ctx, ErrBadRoom)
 		return
 	}
 

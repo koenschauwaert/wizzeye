@@ -62,6 +62,7 @@ var (
 	ErrBadMessage = &Error{2, "Bad message"}
 	ErrNoRoom     = &Error{3, "This action cannot be performed as no room has been joined yet"}
 	ErrRoleTaken  = &Error{4, "Role is already taken in room"}
+	ErrBadRoom    = &Error{5, "Invalid room name"}
 )
 
 type Role string
