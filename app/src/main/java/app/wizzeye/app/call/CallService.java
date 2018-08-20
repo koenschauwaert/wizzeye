@@ -70,6 +70,7 @@ import java.util.concurrent.Future;
 
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
+import app.wizzeye.app.SettingsActivity;
 
 public class CallService extends Service {
 
@@ -202,6 +203,14 @@ public class CallService extends Service {
         // Add default STUN server
         iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302")
             .createIceServer());
+
+        String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
+        if (!turnHost.isEmpty()) {
+            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost)
+                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
+                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
+                .createIceServer());
+        }
 
         return iceServers;
     }

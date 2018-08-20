@@ -11,6 +11,10 @@
     <!-- Preferences -->
     <string name="pref_server_title">Server</string>
     <string name="pref_server_default" translatable="false">https://wizzeye.app/</string>
+    <string name="pref_turn_category">TURN Server (optional)</string>
+    <string name="pref_turn_hostname">Hostname</string>
+    <string name="pref_turn_username">Username</string>
+    <string name="pref_turn_password">Password</string>
 
     <!-- States -->
     <string name="state_idle">Idle</string>

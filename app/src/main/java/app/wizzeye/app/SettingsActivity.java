@@ -30,6 +30,9 @@ import android.preference.PreferenceManager;
 public class SettingsActivity extends Activity {
 
     public static final String KEY_SERVER = "server";
+    public static final String KEY_TURN_HOSTNAME = "turn_hostname";
+    public static final String KEY_TURN_USERNAME = "turn_username";
+    public static final String KEY_TURN_PASSWORD = "turn_password";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,21 +56,21 @@ public class SettingsActivity extends Activity {
             super.onResume();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
-            updateServer(prefs);
+            onSharedPreferenceChanged(prefs, KEY_SERVER);
+            onSharedPreferenceChanged(prefs, KEY_TURN_HOSTNAME);
+            onSharedPreferenceChanged(prefs, KEY_TURN_USERNAME);
         }
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            Preference pref = findPreference(key);
             switch (key) {
             case KEY_SERVER:
-                updateServer(prefs);
+            case KEY_TURN_HOSTNAME:
+            case KEY_TURN_USERNAME:
+                pref.setSummary(prefs.getString(key, ""));
                 break;
             }
-        }
-
-        private void updateServer(SharedPreferences prefs) {
-            Preference pref = findPreference(KEY_SERVER);
-            pref.setSummary(prefs.getString(KEY_SERVER, ""));
         }
     }
 
