@@ -27,6 +27,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -87,6 +88,7 @@ public class CallService extends Service {
     private static final String TAG = "CallService";
     private static final String NOTIFICATION_CHANNEL = "ongoing";
     private static final int NOTIFICATION_ID = 1;
+    private static final String ACTION_HANGUP = "app.wizzeye.action.HANGUP";
 
     private final LocalBinder mBinder = new LocalBinder();
     private final List<Listener> mListeners = new LinkedList<>();
@@ -193,6 +195,16 @@ public class CallService extends Service {
             new Intent(this, MainActivity.class), 0));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setChannelId(NOTIFICATION_CHANNEL);
+        }
+        if (mState.ordinal() > CallState.IDLE.ordinal()) {
+            builder.addAction(new Notification.Action.Builder(
+                    Icon.createWithResource(this, R.drawable.hangup),
+                    getString(R.string.hangup),
+                    PendingIntent.getService(this, 0,
+                        new Intent(this, getClass())
+                            .setAction(ACTION_HANGUP),
+                        0))
+                .build());
         }
         return builder.build();
     }
@@ -337,8 +349,15 @@ public class CallService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        String action = intent.getAction();
         Uri uri = intent.getData();
-        Log.i(TAG, "onStart(" + uri + ")");
+        Log.i(TAG, "onStart(a=" + action + ", d=" + uri + ")");
+
+        if (ACTION_HANGUP.equals(action)) {
+            hangup();
+            stopSelf();
+            return START_NOT_STICKY;
+        }
 
         if (mState != CallState.IDLE) {
             Log.w(TAG, "Call in progress, ignoring start request");
