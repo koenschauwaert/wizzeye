@@ -426,6 +426,8 @@ public class CallService extends Service {
 
         @Override
         public void onIristickServiceError(int error) {
+            if (mState.ordinal() < CallState.WAITING_FOR_HEADSET.ordinal())
+                return;
             switch (error) {
             case ERROR_NOT_INSTALLED:
                 Log.e(TAG, "Iristick Services not installed");
