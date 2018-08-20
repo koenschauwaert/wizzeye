@@ -47,6 +47,7 @@ import com.koushikdutta.async.http.WebSocket;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DataChannel;
 import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
@@ -475,7 +476,7 @@ public class CallService extends Service {
             mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
 
             /* Set up video source */
-            mVideoCap = new IristickCapturer(mHeadset, mHeadset.getCameraIdList()[0], null);
+            mVideoCap = new IristickCapturer(mHeadset, mHeadset.getCameraIdList()[0], mCameraCallback);
             mVideoSrc = mFactory.createVideoSource(mVideoCap);
             mVideoCap.startCapture(640, 480, 30);
             mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
@@ -613,6 +614,37 @@ public class CallService extends Service {
                 if (mState.ordinal() >= CallState.ESTABLISHING.ordinal())
                     setError(CallError.WEBRTC);
             });
+        }
+    };
+
+    private final CameraVideoCapturer.CameraEventsHandler mCameraCallback = new CameraVideoCapturer.CameraEventsHandler() {
+        @Override
+        public void onCameraError(String msg) {
+            Log.e(TAG, "Camera error: " + msg);
+            mHandler.post(() -> {
+                if (mState.ordinal() >= CallState.ESTABLISHING.ordinal())
+                    setError(CallError.CAMERA);
+            });
+        }
+
+        @Override
+        public void onCameraDisconnected() {
+        }
+
+        @Override
+        public void onCameraFreezed(String s) {
+        }
+
+        @Override
+        public void onCameraOpening(String s) {
+        }
+
+        @Override
+        public void onFirstFrameAvailable() {
+        }
+
+        @Override
+        public void onCameraClosed() {
         }
     };
 }

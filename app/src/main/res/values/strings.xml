@@ -30,6 +30,7 @@
     <string name="error_room_busy">Another glass wearer has already joined the room.</string>
     <string name="error_signaling">Unknown error while communicating with the Wizzeye server.</string>
     <string name="error_webrtc">Unknown error while setting up video communication.</string>
+    <string name="error_camera">Something went wrong while opening the camera.</string>
 
     <!-- Notification -->
     <string name="notif_channel_name">Ongoing call</string>
