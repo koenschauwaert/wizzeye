@@ -45,10 +45,16 @@
     <string name="hangup">Hangup</string>
 
     <!-- PermissionsFragment -->
+    <string name="permissions_title">Permissions required</string>
+    <string name="permissions_description">Wizzeye needs access to camera and microphone to make communication possible.</string>
     <string name="permissions_grant">Grant permissions</string>
 
     <!-- RoomSelectionFragment -->
     <string name="roomselection_join">Join room</string>
+    <string name="roomselection_room_name">Room name</string>
+
+    <!-- ErrorFragment -->
+    <string name="error_title">An error occurred</string>
 
     <!-- LogsActivity -->
     <string name="logs_title">Logs</string>
