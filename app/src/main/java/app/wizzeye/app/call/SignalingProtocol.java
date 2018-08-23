@@ -20,6 +20,7 @@
  */
 package app.wizzeye.app.call;
 
+import android.os.Handler;
 import android.util.Log;
 
 import com.koushikdutta.async.http.WebSocket;
@@ -48,35 +49,47 @@ class SignalingProtocol {
     private static final String TAG = "SignalingProtocol";
 
     private final WebSocket mSocket;
+    private final Listener mListener;
+    private final Handler mHandler;
 
-    SignalingProtocol(WebSocket socket, final Listener listener) {
+    SignalingProtocol(WebSocket socket, final Listener listener, final Handler handler) {
         mSocket = socket;
-        socket.setStringCallback(s -> {
+        mListener = listener;
+        mHandler = handler;
+        socket.setStringCallback(this::onMessage);
+    }
+
+    void close() {
+        mSocket.close();
+    }
+
+    private void onMessage(final String s) {
+        mHandler.post(() -> {
             try {
                 Log.d(TAG, ">> " + s);
                 JSONObject msg = new JSONObject(s);
                 String type = msg.getString("type");
                 switch (type) {
                 case "error":
-                    listener.onError(msg.getInt("code"), msg.getString("text"));
+                    mListener.onError(msg.getInt("code"), msg.getString("text"));
                     break;
                 case "join":
-                    listener.onJoin(msg.getString("room"), msg.getString("role"));
+                    mListener.onJoin(msg.getString("room"), msg.getString("role"));
                     break;
                 case "leave":
-                    listener.onLeave(msg.getString("room"), msg.getString("role"));
+                    mListener.onLeave(msg.getString("room"), msg.getString("role"));
                     break;
                 case "broadcast":
                     msg = msg.getJSONObject("data");
                     type = msg.getString("type");
                     switch (type) {
                     case "answer":
-                        listener.onAnswer(new SessionDescription(SessionDescription.Type.ANSWER,
+                        mListener.onAnswer(new SessionDescription(SessionDescription.Type.ANSWER,
                             msg.getString("sdp")));
                         break;
                     case "ice-candidate":
                         JSONObject c = msg.getJSONObject("candidate");
-                        listener.onIceCandidate(new IceCandidate(
+                        mListener.onIceCandidate(new IceCandidate(
                             c.getString("sdpMid"),
                             c.getInt("sdpMLineIndex"),
                             c.getString("candidate")
@@ -93,10 +106,6 @@ class SignalingProtocol {
                 Log.e(TAG, "Received invalid JSON message", e);
             }
         });
-    }
-
-    void close() {
-        mSocket.close();
     }
 
     private void send(JSONObject msg) {

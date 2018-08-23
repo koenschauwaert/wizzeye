@@ -385,25 +385,29 @@ public class CallService extends Service {
         }
         mNetworkMonitor = new ConnectivityManager.NetworkCallback() {
             @Override
-            public void onAvailable(Network network) {
-                if (mState != CallState.WAITING_FOR_NETWORK)
-                    return;
+            public void onAvailable(final Network network) {
+                mHandler.post(() -> {
+                    if (mState != CallState.WAITING_FOR_NETWORK)
+                        return;
 
-                // Connect to server through websocket
-                mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
-                    mUri.buildUpon().path("/ws").build().toString(),
-                    "v1", mSocketConnectCallback);
+                    // Connect to server through websocket
+                    mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
+                        mUri.buildUpon().path("/ws").build().toString(),
+                        "v1", mSocketConnectCallback);
 
-                setState(CallState.CONNECTING_TO_SERVER);
+                    setState(CallState.CONNECTING_TO_SERVER);
+                });
             }
 
             @Override
-            public void onLost(Network network) {
-                if (mState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal()) {
-                    disconnect(CallState.WAITING_FOR_NETWORK);
-                    startNetworkMonitor();
-                    setState(CallState.WAITING_FOR_NETWORK);
-                }
+            public void onLost(final Network network) {
+                mHandler.post(() -> {
+                    if (mState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal()) {
+                        disconnect(CallState.WAITING_FOR_NETWORK);
+                        startNetworkMonitor();
+                        setState(CallState.WAITING_FOR_NETWORK);
+                    }
+                });
             }
         };
         mConnectivityManager.requestNetwork(new NetworkRequest.Builder()
@@ -414,20 +418,22 @@ public class CallService extends Service {
 
     private final AsyncHttpClient.WebSocketConnectCallback mSocketConnectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
         @Override
-        public void onCompleted(Exception ex, WebSocket webSocket) {
-            mFutureSocket = null;
-            if (mState.ordinal() < CallState.CONNECTING_TO_SERVER.ordinal()) {
-                Log.d(TAG, "Discarding obsolete websocket connection");
-                if (webSocket != null)
-                    webSocket.close();
-            } else if (ex == null) {
-                mSignal = new SignalingProtocol(webSocket, mSignalingCallback);
-                IristickManager.getInstance().bind(mIristickConnection, CallService.this, mHandler);
-                setState(CallState.WAITING_FOR_HEADSET);
-            } else {
-                Log.e(TAG, "Failed to connect to server", ex);
-                setError(CallError.SERVER_UNREACHABLE);
-            }
+        public void onCompleted(final Exception ex, final WebSocket webSocket) {
+            mHandler.post(() -> {
+                mFutureSocket = null;
+                if (mState.ordinal() < CallState.CONNECTING_TO_SERVER.ordinal()) {
+                    Log.d(TAG, "Discarding obsolete websocket connection");
+                    if (webSocket != null)
+                        webSocket.close();
+                } else if (ex == null) {
+                    mSignal = new SignalingProtocol(webSocket, mSignalingCallback, mHandler);
+                    IristickManager.getInstance().bind(mIristickConnection, CallService.this, mHandler);
+                    setState(CallState.WAITING_FOR_HEADSET);
+                } else {
+                    Log.e(TAG, "Failed to connect to server", ex);
+                    setError(CallError.SERVER_UNREACHABLE);
+                }
+            });
         }
     };
 
