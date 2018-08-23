@@ -175,6 +175,10 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onCallStateChanged(CallState newState) {
         try {
             showFragment(newState.fragmentClass.newInstance());
+            if (newState == CallState.IDLE)
+                getSupportActionBar().setTitle(R.string.app_name);
+            else
+                getSupportActionBar().setTitle(getCallService().getRoomName());
         } catch (InstantiationException | IllegalAccessException e) {
             Log.e(TAG, "Could not create fragment for state " + newState, e);
         }
