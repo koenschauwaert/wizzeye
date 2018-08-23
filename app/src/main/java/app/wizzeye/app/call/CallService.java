@@ -187,10 +187,12 @@ public class CallService extends Service {
 
     private Notification buildNotification() {
         Notification.Builder builder = new Notification.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_launcher_foreground);
+        builder.setSmallIcon(R.drawable.notification);
+        builder.setColor(getColor(R.color.primary));
         builder.setContentTitle(getString(mState.title));
         if (mState == CallState.ERROR)
             builder.setContentText(getString(mError.message));
+        builder.setSubText(getRoomName());
         builder.setContentIntent(PendingIntent.getActivity(this, 0,
             new Intent(this, MainActivity.class), 0));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
