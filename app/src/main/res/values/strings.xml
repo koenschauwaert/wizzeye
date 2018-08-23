@@ -49,4 +49,10 @@
 
     <!-- RoomSelectionFragment -->
     <string name="roomselection_join">Join room</string>
+
+    <!-- LogsActivity -->
+    <string name="logs_title">Logs</string>
+
+    <!-- SettingsActivity -->
+    <string name="settings_title">Settings</string>
 </resources>

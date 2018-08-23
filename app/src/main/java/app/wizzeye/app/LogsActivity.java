@@ -23,6 +23,7 @@ package app.wizzeye.app;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -52,6 +53,10 @@ public class LogsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_logs);
         mAdapter = new LogcatAdapter();
         ((ListView) findViewById(R.id.logs)).setAdapter(mAdapter);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle(R.string.logs_title);
+        actionBar.setDisplayHomeAsUpEnabled(true);
     }
 
     @Override
@@ -69,6 +74,9 @@ public class LogsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+        case android.R.id.home:
+            finish();
+            return true;
         case R.id.share:
             startActivity(new Intent(Intent.ACTION_SEND)
                 .setType("text/plain")
