@@ -30,6 +30,7 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +40,7 @@ import app.wizzeye.app.call.CallState;
 import app.wizzeye.app.fragments.BaseFragment;
 import app.wizzeye.app.fragments.PermissionsFragment;
 
-public class MainActivity extends Activity implements ServiceConnection, CallService.Listener {
+public class MainActivity extends AppCompatActivity implements ServiceConnection, CallService.Listener {
 
     public static final String[] PERMISSIONS = {
         Manifest.permission.CAMERA,

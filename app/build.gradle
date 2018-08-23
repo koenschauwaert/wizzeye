@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation 'com.android.support:support-annotations:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
     implementation 'com.iristick.smartglass:core:0.6'
     implementation 'org.webrtc:google-webrtc:1.0.23295'
     implementation 'com.koushikdutta.async:androidasync:2.2.1'

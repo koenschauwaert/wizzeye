@@ -20,14 +20,14 @@
  */
 package app.wizzeye.app;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends AppCompatActivity {
 
     public static final String KEY_SERVER = "server";
     public static final String KEY_TURN_HOSTNAME = "turn_hostname";
