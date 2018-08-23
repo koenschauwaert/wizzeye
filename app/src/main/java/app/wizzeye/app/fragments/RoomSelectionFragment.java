@@ -35,6 +35,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.Random;
 import java.util.regex.Pattern;
 
 import app.wizzeye.app.R;
@@ -53,11 +54,22 @@ public class RoomSelectionFragment extends BaseFragment implements TextWatcher {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_room_selection, container, false);
         mRoom = view.findViewById(R.id.room);
-        mRoom.addTextChangedListener(this);
         mRoomLayout = view.findViewById(R.id.room_layout);
         mJoin = view.findViewById(R.id.join);
+
+        mRoom.addTextChangedListener(this);
+        mRoom.setText(generateRandomRoom());
+
         mJoin.setOnClickListener(v -> joinRoom());
+
         return view;
+    }
+
+    private String generateRandomRoom() {
+        String[] colors = getResources().getStringArray(R.array.random_colors);
+        String[] animals = getResources().getStringArray(R.array.random_animals);
+        Random random = new Random();
+        return colors[random.nextInt(colors.length)] + "-" + animals[random.nextInt(animals.length)];
     }
 
     @Override
