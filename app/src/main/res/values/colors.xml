@@ -4,6 +4,8 @@
     <color name="primaryDark">#16373f</color>
     <color name="accent">#ffbf00</color>
 
+    <color name="accent_dim">#80ffbf00</color>
+
     <color name="background_top">#319073</color>
     <color name="background_bottom">#255d69</color>
 

@@ -67,6 +67,7 @@ class IristickCapturer implements CameraVideoCapturer {
     private CaptureSession mCaptureSession;
     private boolean mFirstFrameObserved;
     private int mZoom = 0;
+    private boolean mTorch = false;
 
     IristickCapturer(Headset headset, CameraEventsHandler eventsHandler) {
         if (eventsHandler == null) {
@@ -183,6 +184,19 @@ class IristickCapturer implements CameraVideoCapturer {
         });
     }
 
+    public boolean getTroch() {
+        return mTorch;
+    }
+
+    public void setTorch(final boolean torch) {
+        mCameraThreadHandler.post(() -> {
+            synchronized (mStateLock) {
+                mTorch = torch;
+                applyParametersInternal();
+            }
+        });
+    }
+
     public void triggerAF() {
         mCameraThreadHandler.post(this::triggerAFInternal);
     }
@@ -272,6 +286,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 openCamera();
             } else {
                 mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
+                mRequestBuilder.set(CaptureRequest.FLASH_MODE, mTorch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
                 if (mCameraIdx == 1)
                     mRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
                 mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);

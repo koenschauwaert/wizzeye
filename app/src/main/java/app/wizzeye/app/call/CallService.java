@@ -181,6 +181,15 @@ public class CallService extends Service {
             mVideoCap.setZoom(zoom);
     }
 
+    public boolean getTorch() {
+        return mVideoCap != null && mVideoCap.getTroch();
+    }
+
+    public void setTorch(boolean torch) {
+        if (mVideoCap != null)
+            mVideoCap.setTorch(torch);
+    }
+
     public void triggerAF() {
         if (mVideoCap != null)
             mVideoCap.triggerAF();

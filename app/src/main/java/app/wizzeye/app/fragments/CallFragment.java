@@ -22,6 +22,7 @@ package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,14 @@ public class CallFragment extends InRoomFragment {
         SeekBar zoom = view.findViewById(R.id.zoom);
         zoom.setProgress(getCallService().getZoom());
         zoom.setOnSeekBarChangeListener(mZoomListener);
+
+        FloatingActionButton torch = view.findViewById(R.id.torch);
+        torch.setActivated(getCallService().getTorch());
+        torch.setOnClickListener(v -> {
+            boolean active = !v.isActivated();
+            getCallService().setTorch(active);
+            v.setActivated(active);
+        });
 
         return view;
     }
