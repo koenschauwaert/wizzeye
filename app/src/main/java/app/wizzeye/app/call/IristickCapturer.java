@@ -184,16 +184,7 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     public void triggerAF() {
-        mCameraThreadHandler.post(() -> {
-            synchronized (mStateLock) {
-                if (mCaptureSession != null && mCameraIdx == 1) {
-                    mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                    CaptureRequest request = mRequestBuilder.build();
-                    mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
-                    mCaptureSession.capture(request, null, null);
-                }
-            }
-        });
+        mCameraThreadHandler.post(this::triggerAFInternal);
     }
 
     private void openCamera() {
@@ -281,7 +272,22 @@ class IristickCapturer implements CameraVideoCapturer {
                 openCamera();
             } else {
                 mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
+                if (mCameraIdx == 1)
+                    mRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
                 mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);
+            }
+        }
+    }
+
+    private void triggerAFInternal() {
+        Logging.d(TAG, "triggerAFInternal");
+        checkIsOnCameraThread();
+        synchronized (mStateLock) {
+            if (mCaptureSession != null && mCameraIdx == 1) {
+                mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+                CaptureRequest request = mRequestBuilder.build();
+                mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+                mCaptureSession.capture(request, null, null);
             }
         }
     }
@@ -345,6 +351,10 @@ class IristickCapturer implements CameraVideoCapturer {
                 mCaptureSession = session;
                 mFirstFrameObserved = false;
                 mStateLock.notifyAll();
+                if (mCameraIdx == 1) {
+                    mCameraThreadHandler.removeCallbacks(IristickCapturer.this::triggerAFInternal);
+                    mCameraThreadHandler.postDelayed(IristickCapturer.this::triggerAFInternal, 500);
+                }
                 applyParametersInternal();
             }
         }
