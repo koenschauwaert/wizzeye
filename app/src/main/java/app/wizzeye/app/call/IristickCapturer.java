@@ -57,6 +57,8 @@ class IristickCapturer implements CameraVideoCapturer {
     /* State objects guarded by mStateLock */
     private final Object mStateLock = new Object();
     private boolean mSessionOpening;
+    private boolean mStopping;
+    private int mFailureCount;
     private int mCameraIdx = 0;
     private int mWidth;
     private int mHeight;
@@ -117,7 +119,7 @@ class IristickCapturer implements CameraVideoCapturer {
             mHeight = height;
             mFramerate = framerate;
 
-            openCamera();
+            openCamera(true);
         }
     }
 
@@ -126,6 +128,7 @@ class IristickCapturer implements CameraVideoCapturer {
         Logging.d(TAG, "stopCapture");
 
         synchronized (mStateLock) {
+            mStopping = true;
             while (mSessionOpening) {
                 Logging.d(TAG, "stopCapture: Waiting for session to open");
                 try {
@@ -143,6 +146,7 @@ class IristickCapturer implements CameraVideoCapturer {
             } else {
                 Logging.d(TAG, "stopCapture: No session open");
             }
+            mStopping = false;
         }
 
         Logging.d(TAG, "stopCapture: Done");
@@ -201,8 +205,10 @@ class IristickCapturer implements CameraVideoCapturer {
         mCameraThreadHandler.post(this::triggerAFInternal);
     }
 
-    private void openCamera() {
+    private void openCamera(boolean resetFailures) {
         synchronized (mStateLock) {
+            if (resetFailures)
+                mFailureCount = 0;
             mSessionOpening = true;
             mCameraThreadHandler.post(() -> {
                 synchronized (mStateLock) {
@@ -264,10 +270,16 @@ class IristickCapturer implements CameraVideoCapturer {
             }
             if ("Disconnected".equals(error)) {
                 mEvents.onCameraDisconnected();
+                if (!mStopping)
+                    stopCapture();
+            } else if (mFailureCount < 3 && !mStopping) {
+                mFailureCount++;
+                mCameraThreadHandler.postDelayed(() -> openCamera(false), 200);
             } else {
                 mEvents.onCameraError(error);
+                if (!mStopping)
+                    stopCapture();
             }
-            stopCapture();
         }
     }
 
@@ -275,15 +287,15 @@ class IristickCapturer implements CameraVideoCapturer {
         Logging.d(TAG, "applyParametersInternal");
         checkIsOnCameraThread();
         synchronized (mStateLock) {
-            if (mSessionOpening || mCaptureSession == null)
+            if (mSessionOpening || mStopping || mCaptureSession == null)
                 return;
 
             if ((mZoom == 0 && mCameraIdx != 0) || (mZoom > 0 && mCameraIdx != 1)) {
                 Logging.d(TAG, "Switching cameras");
                 closeCamera();
                 mCameraIdx = (mCameraIdx + 1) % 2;
-                mSessionOpening = true;
-                openCamera();
+                mFailureCount = 0;
+                openCamera(true);
             } else {
                 mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
                 mRequestBuilder.set(CaptureRequest.FLASH_MODE, mTorch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
