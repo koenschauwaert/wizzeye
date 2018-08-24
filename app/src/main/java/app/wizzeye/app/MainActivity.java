@@ -22,6 +22,7 @@ package app.wizzeye.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -49,7 +50,12 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     private static final String TAG = "MainActivity";
 
+    private static final String STATE_LAST_FRAGMENT_TYPE = "lastFragmentType";
+    private static final String STATE_LAST_FRAGMENT_STATE = "lastFragmentState";
+
     private BaseFragment mFragment;
+    private String mLastFragmentType;
+    private Fragment.SavedState mLastFragmentState;
     private boolean mBound;
     private CallService mCallService;
 
@@ -59,6 +65,11 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
         handleIntent(getIntent());
+
+        if (savedInstanceState != null) {
+            mLastFragmentType = savedInstanceState.getString(STATE_LAST_FRAGMENT_TYPE);
+            mLastFragmentState = savedInstanceState.getParcelable(STATE_LAST_FRAGMENT_STATE);
+        }
     }
 
     @Override
@@ -92,10 +103,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
 
     private void showFragment(BaseFragment fragment) {
         if (fragment != null) {
+            if (mLastFragmentType != null && mLastFragmentType.equals(fragment.getClass().getName())) {
+                fragment.setInitialSavedState(mLastFragmentState);
+            }
+            mLastFragmentType = null;
+            mLastFragmentState = null;
             getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, fragment)
                 .commit();
         } else if (mFragment != null) {
+            mLastFragmentType = mFragment.getClass().getName();
+            mLastFragmentState = getFragmentManager().saveFragmentInstanceState(mFragment);
             getFragmentManager().beginTransaction().remove(mFragment).commit();
         }
         mFragment = fragment;
@@ -110,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         showFragment(null);
+        outState.putString(STATE_LAST_FRAGMENT_TYPE, mLastFragmentType);
+        outState.putParcelable(STATE_LAST_FRAGMENT_STATE, mLastFragmentState);
         super.onSaveInstanceState(outState);
     }
 
