@@ -25,6 +25,7 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SeekBar;
 
 import org.webrtc.SurfaceViewRenderer;
 
@@ -38,6 +39,12 @@ public class CallFragment extends InRoomFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_call, container, false);
         mVideo = view.findViewById(R.id.video);
+        mVideo.setOnClickListener(v -> getCallService().triggerAF());
+
+        SeekBar zoom = view.findViewById(R.id.zoom);
+        zoom.setProgress(getCallService().getZoom());
+        zoom.setOnSeekBarChangeListener(mZoomListener);
+
         return view;
     }
 
@@ -60,5 +67,20 @@ public class CallFragment extends InRoomFragment {
         mVideo.release();
         super.onStop();
     }
+
+    private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            getCallService().setZoom(progress);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+    };
 
 }

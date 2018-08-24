@@ -37,22 +37,16 @@ import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoFrame;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 class IristickCapturer implements CameraVideoCapturer {
 
     private static final String TAG = "IristickCapturer";
 
-    private enum SwitchState {
-        IDLE, // No switch requested.
-        PENDING, // Waiting for previous capture session to open.
-        IN_PROGRESS, // Waiting for new switched capture session to start.
-    }
-
     /* Initialized by constructor */
     private final Headset mHeadset;
     private final CameraEventsHandler mEvents;
+    private final String[] mCameraNames;
 
     /* Initialized by initialize() */
     private SurfaceTextureHelper mSurfaceHelper;
@@ -63,7 +57,7 @@ class IristickCapturer implements CameraVideoCapturer {
     /* State objects guarded by mStateLock */
     private final Object mStateLock = new Object();
     private boolean mSessionOpening;
-    private String mCameraName;
+    private int mCameraIdx = 0;
     private int mWidth;
     private int mHeight;
     private int mFramerate;
@@ -72,10 +66,9 @@ class IristickCapturer implements CameraVideoCapturer {
     private CaptureRequest.Builder mRequestBuilder;
     private CaptureSession mCaptureSession;
     private boolean mFirstFrameObserved;
-    private SwitchState mSwitchState = SwitchState.IDLE;
-    private CameraSwitchHandler mSwitchEvents;
+    private int mZoom = 0;
 
-    IristickCapturer(Headset headset, String cameraName, CameraEventsHandler eventsHandler) {
+    IristickCapturer(Headset headset, CameraEventsHandler eventsHandler) {
         if (eventsHandler == null) {
             eventsHandler = new CameraEventsHandler() {
                 @Override
@@ -93,8 +86,8 @@ class IristickCapturer implements CameraVideoCapturer {
             };
         }
         mHeadset = headset;
-        mCameraName = cameraName;
         mEvents = eventsHandler;
+        mCameraNames = headset.getCameraIdList();
     }
 
     @Override
@@ -174,18 +167,18 @@ class IristickCapturer implements CameraVideoCapturer {
 
     @Override
     public void switchCamera(final CameraSwitchHandler cameraSwitchHandler) {
-        Logging.d(TAG, "switchCamera");
-        mCameraThreadHandler.post(() -> switchCameraInternal(cameraSwitchHandler));
+        throw new UnsupportedOperationException();
     }
 
-    public <T> void setParameter(final CaptureRequest.Key<T> key, final T value) {
+    public int getZoom() {
+        return mZoom;
+    }
+
+    public void setZoom(final int zoom) {
         mCameraThreadHandler.post(() -> {
             synchronized (mStateLock) {
-                if (mRequestBuilder == null)
-                    return;
-                mRequestBuilder.set(key, value);
-                if (mCaptureSession != null)
-                    mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);
+                mZoom = Math.max(0, Math.min(mCameraNames.length >= 2 ? 3 : 0, zoom));
+                applyParametersInternal();
             }
         });
     }
@@ -193,10 +186,11 @@ class IristickCapturer implements CameraVideoCapturer {
     public void triggerAF() {
         mCameraThreadHandler.post(() -> {
             synchronized (mStateLock) {
-                if (mCaptureSession != null) {
+                if (mCaptureSession != null && mCameraIdx == 1) {
                     mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                    mCaptureSession.capture(mRequestBuilder.build(), null, null);
+                    CaptureRequest request = mRequestBuilder.build();
                     mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+                    mCaptureSession.capture(request, null, null);
                 }
             }
         });
@@ -207,11 +201,16 @@ class IristickCapturer implements CameraVideoCapturer {
             mSessionOpening = true;
             mCameraThreadHandler.post(() -> {
                 synchronized (mStateLock) {
-                    mEvents.onCameraOpening(mCameraName);
+                    if (mCameraIdx >= mCameraNames.length) {
+                        mEvents.onCameraError("Headset has no camera index " + mCameraIdx);
+                        return;
+                    }
+                    final String name = mCameraNames[mCameraIdx];
+                    mEvents.onCameraOpening(name);
                     try {
-                        mHeadset.openCamera(mCameraName, mCameraListener, mCameraThreadHandler);
+                        mHeadset.openCamera(name, mCameraListener, mCameraThreadHandler);
                     } catch (IllegalArgumentException e) {
-                        mEvents.onCameraError("Unknown camera: " + mCameraName);
+                        mEvents.onCameraError("Unknown camera: " + name);
                     }
                 }
             });
@@ -244,48 +243,6 @@ class IristickCapturer implements CameraVideoCapturer {
         }
     }
 
-    private void switchCameraInternal(CameraSwitchHandler cameraSwitchHandler) {
-        Logging.d(TAG, "switchCameraInternal");
-        checkIsOnCameraThread();
-        String[] cameras = mHeadset.getCameraIdList();
-        if (cameras.length < 2) {
-            if (cameraSwitchHandler != null)
-                cameraSwitchHandler.onCameraSwitchError("No camera to switch to");
-            return;
-        }
-
-        synchronized (mStateLock) {
-            if (mSwitchState != SwitchState.IDLE) {
-                Logging.d(TAG, "switchCameraInternal: already in progress");
-                if (cameraSwitchHandler != null)
-                    cameraSwitchHandler.onCameraSwitchError("Camera switch already in progress");
-                return;
-            }
-
-            if (!mSessionOpening && mCaptureSession == null) {
-                Logging.d(TAG, "switchCameraInternal: No session open");
-                if (cameraSwitchHandler != null)
-                    cameraSwitchHandler.onCameraSwitchError("Camera is not running");
-                return;
-            }
-
-            mSwitchEvents = cameraSwitchHandler;
-            if (mSessionOpening) {
-                mSwitchState = SwitchState.PENDING;
-            } else {
-                mSwitchState = SwitchState.IN_PROGRESS;
-                Logging.d(TAG, "switchCameraInternal: Stopping session");
-                closeCamera();
-                int idx = Arrays.asList(cameras).indexOf(mCameraName);
-                mCameraName = cameras[(idx + 1) % cameras.length];
-                mSessionOpening = true;
-                openCamera();
-            }
-        }
-
-        Logging.d(TAG, "switchCameraInternal: Done");
-    }
-
     private void handleFailure(String error) {
         checkIsOnCameraThread();
         synchronized (mStateLock) {
@@ -299,13 +256,6 @@ class IristickCapturer implements CameraVideoCapturer {
                 mObserver.onCapturerStarted(false);
                 mSessionOpening = false;
                 mStateLock.notifyAll();
-                if (mSwitchState != SwitchState.IDLE) {
-                    if (mSwitchEvents != null) {
-                        mSwitchEvents.onCameraSwitchError(error);
-                        mSwitchEvents = null;
-                    }
-                    mSwitchState = SwitchState.IDLE;
-                }
             }
             if ("Disconnected".equals(error)) {
                 mEvents.onCameraDisconnected();
@@ -313,6 +263,26 @@ class IristickCapturer implements CameraVideoCapturer {
                 mEvents.onCameraError(error);
             }
             stopCapture();
+        }
+    }
+
+    private void applyParametersInternal() {
+        Logging.d(TAG, "applyParametersInternal");
+        checkIsOnCameraThread();
+        synchronized (mStateLock) {
+            if (mSessionOpening || mCaptureSession == null)
+                return;
+
+            if ((mZoom == 0 && mCameraIdx != 0) || (mZoom > 0 && mCameraIdx != 1)) {
+                Logging.d(TAG, "Switching cameras");
+                closeCamera();
+                mCameraIdx = (mCameraIdx + 1) % 2;
+                mSessionOpening = true;
+                openCamera();
+            } else {
+                mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
+                mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);
+            }
         }
     }
 
@@ -369,26 +339,13 @@ class IristickCapturer implements CameraVideoCapturer {
         public void onConfigured(CaptureSession session) {
             checkIsOnCameraThread();
             synchronized (mStateLock) {
-                session.setRepeatingRequest(mRequestBuilder.build(), null, null);
                 mSurfaceHelper.startListening(mFrameAvailableListener);
                 mObserver.onCapturerStarted(true);
                 mSessionOpening = false;
                 mCaptureSession = session;
                 mFirstFrameObserved = false;
                 mStateLock.notifyAll();
-                switch (mSwitchState) {
-                case IN_PROGRESS:
-                    if (mSwitchEvents != null) {
-                        mSwitchEvents.onCameraSwitchDone(false);
-                        mSwitchEvents = null;
-                    }
-                    mSwitchState = SwitchState.IDLE;
-                    break;
-                case PENDING:
-                    mSwitchState = SwitchState.IDLE;
-                    switchCameraInternal(mSwitchEvents);
-                    break;
-                }
+                applyParametersInternal();
             }
         }
 

@@ -172,6 +172,20 @@ public class CallService extends Service {
         }
     }
 
+    public int getZoom() {
+        return mVideoCap != null ? mVideoCap.getZoom() : 0;
+    }
+
+    public void setZoom(int zoom) {
+        if (mVideoCap != null)
+            mVideoCap.setZoom(zoom);
+    }
+
+    public void triggerAF() {
+        if (mVideoCap != null)
+            mVideoCap.triggerAF();
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Helpers
@@ -518,7 +532,7 @@ public class CallService extends Service {
             mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
 
             /* Set up video source */
-            mVideoCap = new IristickCapturer(mHeadset, mHeadset.getCameraIdList()[0], mCameraCallback);
+            mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
             mVideoSrc = mFactory.createVideoSource(mVideoCap);
             mVideoCap.startCapture(640, 480, 30);
             mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
