@@ -50,7 +50,7 @@
     <string name="permissions_grant">Grant permissions</string>
 
     <!-- RoomSelectionFragment -->
-    <string name="roomselection_join">Join room</string>
+    <string name="roomselection_join">Join</string>
     <string name="roomselection_room_name">Room name</string>
     <string name="roomselection_error_short">At least 5 characters are required</string>
     <string name="roomselection_error_long">Maximum 64 characters</string>

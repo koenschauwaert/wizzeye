@@ -2,6 +2,7 @@
 <android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
@@ -44,42 +45,21 @@
         app:layout_constraintWidth_max="16dp"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/logo"
-        app:layout_constraintEnd_toStartOf="@+id/room_layout"
+        app:layout_constraintEnd_toStartOf="@+id/list"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
-    <android.support.design.widget.TextInputLayout
-        android:id="@+id/room_layout"
+    <ListView
+        android:id="@+id/list"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        tools:listitem="@layout/item_room_fixed"
+        tools:layout_height="100dp"
         app:layout_constraintHorizontal_weight="20"
         app:layout_constraintStart_toEndOf="@+id/spacer"
-        app:layout_constraintEnd_toEndOf="@+id/right_guideline"
+        app:layout_constraintEnd_toStartOf="@+id/right_guideline"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/join"
-        app:layout_constraintVertical_chainStyle="packed"
-        >
-
-        <EditText
-            android:id="@+id/room"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/roomselection_room_name"
-            android:inputType="textUri"
-            />
-
-    </android.support.design.widget.TextInputLayout>
-
-    <Button
-        android:id="@+id/join"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/roomselection_join"
-        app:layout_constraintStart_toStartOf="@+id/room_layout"
-        app:layout_constraintEnd_toEndOf="@+id/room_layout"
-        app:layout_constraintTop_toBottomOf="@+id/room_layout"
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
