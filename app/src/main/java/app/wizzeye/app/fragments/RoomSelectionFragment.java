@@ -52,11 +52,14 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
     private static final String STATE_RANDOM_ROOM = "randomRoom";
     private static final String STATE_CUSTOM_ROOM = "customRoom";
 
+    private SharedPreferences mPreferences;
     private String mRandomRoom;
     private String mCustomRoom;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
         if (savedInstanceState != null) {
             mRandomRoom = savedInstanceState.getString(STATE_RANDOM_ROOM);
             mCustomRoom = savedInstanceState.getString(STATE_CUSTOM_ROOM);
@@ -64,7 +67,7 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
         if (mRandomRoom == null)
             mRandomRoom = generateRandomRoom();
         if (mCustomRoom == null)
-            mCustomRoom = "";
+            mCustomRoom = mPreferences.getString(SettingsActivity.KEY_LAST_ROOM, "");
 
         View view = inflater.inflate(R.layout.fragment_room_selection, container, false);
         ListView list = view.findViewById(R.id.list);
@@ -104,8 +107,8 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
     private void joinRoom(String room) {
         if (room.isEmpty() || validateRoomName(room) != 0)
             return;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        Uri server = Uri.parse(prefs.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
+        mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, room).apply();
+        Uri server = Uri.parse(mPreferences.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
         getMainActivity().startService(new Intent(getMainActivity(), CallService.class)
             .setData(Uri.withAppendedPath(server, Uri.encode(room))));
     }

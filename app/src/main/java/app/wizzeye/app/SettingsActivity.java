@@ -36,6 +36,8 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_TURN_USERNAME = "turn_username";
     public static final String KEY_TURN_PASSWORD = "turn_password";
 
+    public static final String KEY_LAST_ROOM = "last_room";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
