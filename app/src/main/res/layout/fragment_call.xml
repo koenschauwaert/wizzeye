@@ -17,20 +17,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
-    <SeekBar
-        android:id="@+id/zoom"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:thumb="@drawable/zoom_thumb"
-        android:max="3"
-        tools:progress="2"
-        app:layout_constraintWidth_percent="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
-
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/torch"
         android:layout_width="wrap_content"
@@ -43,8 +29,31 @@
         app:backgroundTint="@color/activable_fab_background"
         app:borderWidth="0dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/video"
         />
+
+    <FrameLayout
+        android:id="@+id/zoom_layout"
+        android:layout_width="48dp"
+        android:layout_height="160dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="@+id/torch"
+        app:layout_constraintEnd_toEndOf="@+id/torch"
+        app:layout_constraintTop_toBottomOf="@+id/torch"
+        >
+
+        <SeekBar
+            android:id="@+id/zoom"
+            android:layout_width="160dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:rotation="270"
+            android:thumb="@drawable/zoom_thumb"
+            android:max="3"
+            tools:progress="2"
+            />
+
+    </FrameLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/hangup"
