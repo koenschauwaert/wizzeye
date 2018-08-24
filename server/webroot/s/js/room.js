@@ -20,13 +20,6 @@
  */
 "use strict";
 
-window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection ||
-                           window.webkitRTCPeerConnection;
-window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription ||
-                               window.webkitRTCSessionDescription;
-window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate ||
-                         window.webkitRTCIceCandidate;
-
 let params = new URLSearchParams(document.location.search.substring(1));
 let role = params.get('role') || 'observer';
 
