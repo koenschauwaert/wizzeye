@@ -96,7 +96,7 @@ public class LogsActivity extends AppCompatActivity {
 
         void reload() {
             try {
-                Process process = Runtime.getRuntime().exec("logcat -d -v tag");
+                Process process = Runtime.getRuntime().exec("logcat -d -t 500 -v time");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 mLines = reader.lines().collect(Collectors.toList());
             } catch (IOException e) {
