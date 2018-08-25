@@ -28,7 +28,32 @@ SOFTWARE.
   <link rel="stylesheet" type="text/css" href="/s/css/style.css" />
   <title>Wizzeye</title>
 </head>
-<body>
-  Welcome to Wizzeye.
+<body class="d-flex flex-column">
+  <div id="nojs" class="alert alert-danger mb-0" role="alert">
+    Please enable Javascript for this site.
+  </div>
+
+  <div class="mx-auto my-auto d-flex flex-column justify-content-center">
+    <div class="mx-auto my-auto d-flex flex-wrap">
+      <img src="/s/img/logo.svg" class="logo mx-auto m-sm-5" />
+      <h1 class="display-3 my-auto mx-auto mr-sm-5">Wizzeye</h1>
+    </div>
+    <form id="joinform" class="form-inline">
+      <div class="input-group input-group-lg my-2 flex-fill">
+        <input type="input" class="form-control" id="room"
+          placeholder="Room name"
+          autofocus="autofocus"
+          minlength="5" maxlength="64" pattern="[-_A-Za-z0-9]*"
+          title="A room name consists of letters, digits, '-' or '_'" />
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-warning">Join room</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script src="/s/js/jquery.min.js"></script>
+  <script src="/s/js/bootstrap.bundle.min.js"></script>
+  <script src="/s/js/index.js"></script>
 </body>
 </html>

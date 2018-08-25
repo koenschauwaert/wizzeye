@@ -18,75 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+"use strict";
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
+$("#nojs").hide();
 
-body {
-  background: linear-gradient(#319073, #255D69);
-  color: #e6e9ee;
-}
-
-video {
-  background-color: black;
-  min-width: 240px;
-  min-height: 240px;
-}
-
-.bg-primary {
-  background-color: #255D69 !important;
-}
-
-.form-control:focus {
-  border-color: #ffc107;
-  box-shadow: 0 0 0 0.2rem rgba(255,193,7,.5);
-}
-
-.logo {
-  width: 10rem;
-  height: 10rem;
-  margin: 3rem;
-}
-
-@media (max-width: 480px) {
-  .logo {
-    margin: 1rem;
-  }
-}
-
-@media (max-height: 480px) {
-  .logo {
-    width: 5rem;
-    height: 5rem;
-    margin: 1rem;
-  }
-}
-
-.statusbox {
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-direction: column;
-  flex-direction: column;
-  width: 50%;
-}
-
-@media (max-width: 480px) {
-  .statusbox {
-    width: 100%;
-  }
-}
-
-.status {
-  text-align: center;
-  font-size: 2rem;
-  font-weight: 300;
-}
-
-.status-description {
-  text-align: center;
-  font-size: 1rem;
-}
+$("#joinform").submit(function (event) {
+  location.pathname = "/" + $("#room").val().toLowerCase();
+  event.preventDefault();
+});
