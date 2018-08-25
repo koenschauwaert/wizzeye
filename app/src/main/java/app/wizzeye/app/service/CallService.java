@@ -397,6 +397,7 @@ public class CallService extends Service {
         startForeground(NOTIFICATION_ID, buildNotification());
 
         mUri = uri;
+        mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, getRoomName()).apply();
         startNetworkMonitor();
         setState(CallState.WAITING_FOR_NETWORK);
 
