@@ -33,6 +33,7 @@ public enum CallError {
     ROOM_BUSY(R.string.error_room_busy),
     SIGNALING(R.string.error_signaling),
     WEBRTC(R.string.error_webrtc),
+    ICE(R.string.error_ice),
     CAMERA(R.string.error_camera),
     ;
 
