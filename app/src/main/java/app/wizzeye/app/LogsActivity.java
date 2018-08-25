@@ -109,7 +109,8 @@ public class LogsActivity extends AppCompatActivity {
 
         @Override
         public String toString() {
-            return mLines.stream().collect(Collectors.joining("\n"));
+            return BuildConfig.APPLICATION_ID + " " + BuildConfig.VERSION_NAME + "\n" +
+                   mLines.stream().collect(Collectors.joining("\n"));
         }
 
         @Override
