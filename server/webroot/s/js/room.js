@@ -93,7 +93,8 @@ let Err = {
   ROOM_BUSY: "Another observer has already joined the room.",
   SIGNALING: "An unknown error occurred while communicating with the Wizzeye server.",
   MEDIA_DENIED: "The microphone on this device could not be accessed.",
-  WEBRTC: "An error occurred while establishing the video communication."
+  WEBRTC: "An error occurred while establishing the video communication.",
+  ICE: "A peer-to-peer link could not be established."
 };
 
 let state = State.LOADING; // global state variable
@@ -193,6 +194,17 @@ let RTC = {
     let pc = new RTCPeerConnection({iceServers: [
       {urls: "stun:stun.l.google.com:19302"}
     ]});
+    pc.oniceconnectionstatechange = function (event) {
+      console.log("ICE connection state: " + pc.iceConnectionState);
+      switch(pc.iceConnectionState) {
+      case "connected":
+        ev.onIceConnected();
+        break;
+      case "failed":
+        ev.onIceFailed();
+        break;
+      }
+    }
     pc.onicecandidate = function (event) {
       if (event.candidate)
         ev.onIceCandidate(event.candidate);
@@ -253,6 +265,23 @@ ws.onopen = function() {
 }
 
 let rtcEvents = {
+  onIceConnected: function() {
+    if (state == State.ESTABLISHING)
+      setState(State.CALL_IN_PROGRESS);
+  },
+
+  onIceFailed: function() {
+    RTC.closePC();
+    switch (state) {
+    case State.ESTABLISHING:
+      setState(State.ERROR, Err.ICE);
+      break;
+    case State.CALL_IN_PROGRESS:
+      setState(State.ESTABLISHING);
+      break;
+    }
+  },
+
   onIceCandidate: function(candidate) {
     ws.sendData({type: 'ice-candidate', candidate: candidate});
   }
@@ -304,22 +333,21 @@ ws.onmessage = function(msg) {
       if (state > State.ESTABLISHING)
         setState(State.ESTABLISHING);
       requestLocalMedia()
-        .then(stream => RTC.makeAnswer(rtcEvents, stream, msg),
-              e => setState(State.ERROR, Err.MEDIA_DENIED, e))
+        .then(stream => {
+                if (state >= State.GET_USER_MEDIA)
+                  setState(State.ESTABLISHING);
+                return RTC.makeAnswer(rtcEvents, stream, msg)
+              }, e => setState(State.ERROR, Err.MEDIA_DENIED, e))
         .then(answer => {
-          if (state >= State.GET_USER_MEDIA) {
+          if (state >= State.ESTABLISHING) {
             ws.sendData(answer);
-            setState(State.CALL_IN_PROGRESS);
           }
         }).catch(e => setState(State.ERROR, Err.WEBRTC, e));
       break;
     case 'answer':
-      if (state < State.ESTABLISHING)
+      if (state != State.ESTABLISHING)
         break;
-      RTC.setAnswer(msg).then(() => {
-        if (state >= State.ESTABLISHING)
-          setState(State.CALL_IN_PROGRESS);
-      }).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+      RTC.setAnswer(msg).catch(e => setState(State.ERROR, Err.WEBRTC, e));
       break;
     case 'ice-candidate':
       if (state < State.GET_USER_MEDIA)
