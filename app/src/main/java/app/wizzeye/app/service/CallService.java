@@ -326,18 +326,18 @@ public class CallService extends Service {
             mFactory = null;
         }
 
-        if (limit.ordinal() >= CallState.WAITING_FOR_OBSERVER.ordinal())
-            return;
-
-        if (mSignal != null)
-            mSignal.leave();
         mHeadset = null;
 
         if (limit.ordinal() >= CallState.WAITING_FOR_HEADSET.ordinal())
             return;
 
         IristickManager.getInstance().unbind(mIristickConnection);
+
+        if (limit.ordinal() >= CallState.WAITING_FOR_OBSERVER.ordinal())
+            return;
+
         if (mSignal != null) {
+            mSignal.leave();
             mSignal.close();
             mSignal = null;
         }
@@ -453,8 +453,8 @@ public class CallService extends Service {
                         webSocket.close();
                 } else if (ex == null) {
                     mSignal = new SignalingProtocol(webSocket, mSignalingCallback, mHandler);
-                    IristickManager.getInstance().bind(mIristickConnection, CallService.this, mHandler);
-                    setState(CallState.WAITING_FOR_HEADSET);
+                    mSignal.join(getRoomName());
+                    setState(CallState.WAITING_FOR_OBSERVER);
                 } else {
                     Log.e(TAG, "Failed to connect to server", ex);
                     setError(CallError.SERVER_UNREACHABLE);
@@ -467,8 +467,43 @@ public class CallService extends Service {
         @Override
         public void onHeadsetConnected(Headset headset) {
             mHeadset = headset;
-            mSignal.join(getRoomName());
-            setState(CallState.WAITING_FOR_OBSERVER);
+
+            /* Create PeerConnection factory */
+            PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
+            options.networkIgnoreMask = 16; // ADAPTER_TYPE_LOOPBACK
+            options.disableNetworkMonitor = true;
+            mFactory = PeerConnectionFactory.builder().setOptions(options).createPeerConnectionFactory();
+            mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
+
+            /* Set up video source */
+            mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
+            mVideoSrc = mFactory.createVideoSource(mVideoCap);
+            mVideoCap.startCapture(640, 480, 30);
+            mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
+            mVideoTrack.setEnabled(true);
+
+            /* Set up audio source */
+            mAudioSrc = mFactory.createAudioSource(new MediaConstraints());
+            mAudioTrack = mFactory.createAudioTrack("Wizzeye_a0", mAudioSrc);
+            mAudioTrack.setEnabled(true);
+
+            /* Create PeerConnection */
+            PeerConnection.RTCConfiguration config = new PeerConnection.RTCConfiguration(getIceServers());
+            mPC = mFactory.createPeerConnection(config, mPCObserver);
+
+            /* Create local media stream */
+            MediaStream localStream = mFactory.createLocalMediaStream("Wizzeye");
+            localStream.addTrack(mVideoTrack);
+            localStream.addTrack(mAudioTrack);
+            mPC.addStream(localStream);
+
+            /* Create offer */
+            MediaConstraints sdpcstr = new MediaConstraints();
+            sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+            sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
+            mPC.createOffer(mSdpObserver, sdpcstr);
+
+            setState(CallState.ESTABLISHING);
         }
 
         @Override
@@ -533,43 +568,8 @@ public class CallService extends Service {
                 return;
 
             disconnect(CallState.WAITING_FOR_OBSERVER);
-
-            /* Create PeerConnection factory */
-            PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-            options.networkIgnoreMask = 16; // ADAPTER_TYPE_LOOPBACK
-            options.disableNetworkMonitor = true;
-            mFactory = PeerConnectionFactory.builder().setOptions(options).createPeerConnectionFactory();
-            mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
-
-            /* Set up video source */
-            mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
-            mVideoSrc = mFactory.createVideoSource(mVideoCap);
-            mVideoCap.startCapture(640, 480, 30);
-            mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
-            mVideoTrack.setEnabled(true);
-
-            /* Set up audio source */
-            mAudioSrc = mFactory.createAudioSource(new MediaConstraints());
-            mAudioTrack = mFactory.createAudioTrack("Wizzeye_a0", mAudioSrc);
-            mAudioTrack.setEnabled(true);
-
-            /* Create PeerConnection */
-            PeerConnection.RTCConfiguration config = new PeerConnection.RTCConfiguration(getIceServers());
-            mPC = mFactory.createPeerConnection(config, mPCObserver);
-
-            /* Create local media stream */
-            MediaStream localStream = mFactory.createLocalMediaStream("Wizzeye");
-            localStream.addTrack(mVideoTrack);
-            localStream.addTrack(mAudioTrack);
-            mPC.addStream(localStream);
-
-            /* Create offer */
-            MediaConstraints sdpcstr = new MediaConstraints();
-            sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
-            sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
-            mPC.createOffer(mSdpObserver, sdpcstr);
-
-            setState(CallState.ESTABLISHING);
+            IristickManager.getInstance().bind(mIristickConnection, CallService.this, mHandler);
+            setState(CallState.WAITING_FOR_HEADSET);
         }
 
         @Override

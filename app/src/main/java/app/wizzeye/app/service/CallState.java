@@ -35,8 +35,8 @@ public enum CallState {
     ERROR(ErrorFragment.class, R.string.state_error),
     WAITING_FOR_NETWORK(ConnectingFragment.class, R.string.state_waiting_for_network),
     CONNECTING_TO_SERVER(ConnectingFragment.class, R.string.state_connecting_to_server),
-    WAITING_FOR_HEADSET(ConnectingFragment.class, R.string.state_waiting_for_headset),
     WAITING_FOR_OBSERVER(ConnectingFragment.class, R.string.state_waiting_for_observer),
+    WAITING_FOR_HEADSET(ConnectingFragment.class, R.string.state_waiting_for_headset),
     ESTABLISHING(ConnectingFragment.class, R.string.state_establishing),
     CALL_IN_PROGRESS(CallFragment.class, R.string.state_call_in_progress),
     ;
