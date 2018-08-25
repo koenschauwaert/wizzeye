@@ -300,6 +300,9 @@ ws.onmessage = function(msg) {
     case 'offer':
       if (state < State.GET_USER_MEDIA)
         break;
+      RTC.closePC();
+      if (state > State.ESTABLISHING)
+        setState(State.ESTABLISHING);
       requestLocalMedia()
         .then(stream => RTC.makeAnswer(rtcEvents, stream, msg),
               e => setState(State.ERROR, Err.MEDIA_DENIED, e))
