@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="74" height="74" version="1.1" viewBox="0 0 74 74" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke="#e6e9ee" stroke-width="2">
+  <circle cx="37" cy="37" r="36"/>
+   <path d="m48 18 3-5m-30.903 30.285 9.9026-26.285 14-8 13 7-9 2-2 3 8.4301 22.724m-19.43 5.2758h4"/>
+   <circle cx="49" cy="52" r="10"/>
+   <circle cx="25" cy="52" r="10"/>
+   <circle cx="25" cy="52" r="6"/>
+   <circle cx="49" cy="52" r="6"/>
+ </g>
+</svg>
