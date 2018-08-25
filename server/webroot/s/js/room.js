@@ -22,7 +22,9 @@
 
 let params = new URLSearchParams(document.location.search.substring(1));
 let role = params.get('role') || 'observer';
+let room = location.pathname.replace(/^\/*(.*?)\/*$/, '$1');
 
+$("#roomname").text(room).attr('href', location);
 $("#nojs").hide();
 
 var mediaStream;

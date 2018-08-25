@@ -28,12 +28,20 @@ SOFTWARE.
   <link rel="stylesheet" type="text/css" href="/s/css/style.css" />
   <title>Wizzeye</title>
 </head>
-<body>
+<body class="d-flex flex-column">
+  <nav class="navbar navbar-dark bg-primary">
+    <span class="navbar-brand mb-1 h1">Wizzeye</span>
+    <div class="navbar-nav mr-auto">
+      <a id="roomname" class="nav-item nav-link active" href="#"></a>
+    </div>
+    <a href="/" class="btn btn-warning">End call</a>
+  </nav>
+
   <div id="nojs" class="alert alert-danger mb-0" role="alert">
     Please enable Javascript for this site.
   </div>
 
-  <video id="remote" autoplay="autoplay"></video>
+  <video id="remote" autoplay="autoplay" class="flex-fill"></video>
 
   <script src="/s/js/webrtc-adapter.js"></script>
   <script src="/s/js/jquery.min.js"></script>
