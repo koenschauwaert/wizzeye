@@ -34,6 +34,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 import app.wizzeye.app.service.CallService;
 import app.wizzeye.app.service.CallState;
@@ -194,13 +195,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onCallStateChanged(CallState newState) {
         try {
             showFragment(newState.fragmentClass.newInstance());
-            if (newState == CallState.IDLE)
-                getSupportActionBar().setTitle(R.string.app_name);
-            else
-                getSupportActionBar().setTitle(getCallService().getRoomName());
         } catch (InstantiationException | IllegalAccessException e) {
             Log.e(TAG, "Could not create fragment for state " + newState, e);
         }
+        if (newState == CallState.IDLE)
+            getSupportActionBar().setTitle(R.string.app_name);
+        else
+            getSupportActionBar().setTitle(getCallService().getRoomName());
+        getWindow().setFlags(newState == CallState.IDLE || newState == CallState.ERROR ? 0 :
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
 }
