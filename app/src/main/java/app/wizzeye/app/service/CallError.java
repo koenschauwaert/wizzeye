@@ -18,7 +18,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package app.wizzeye.app.call;
+package app.wizzeye.app.service;
 
 import android.support.annotation.StringRes;
 

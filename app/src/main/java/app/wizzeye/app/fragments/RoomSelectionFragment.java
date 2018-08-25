@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 
 import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
-import app.wizzeye.app.call.CallService;
+import app.wizzeye.app.service.CallService;
 
 public class RoomSelectionFragment extends BaseFragment implements AdapterView.OnItemClickListener {
 

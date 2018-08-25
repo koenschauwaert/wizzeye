@@ -41,7 +41,7 @@
         <activity android:name=".LogsActivity" />
 
         <service
-            android:name=".call.CallService"
+            android:name=".service.CallService"
             android:enabled="true"
             android:exported="false">
         </service>

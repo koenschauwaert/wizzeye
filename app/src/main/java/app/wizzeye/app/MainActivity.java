@@ -21,7 +21,6 @@
 package app.wizzeye.app;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -36,8 +35,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import app.wizzeye.app.call.CallService;
-import app.wizzeye.app.call.CallState;
+import app.wizzeye.app.service.CallService;
+import app.wizzeye.app.service.CallState;
 import app.wizzeye.app.fragments.BaseFragment;
 import app.wizzeye.app.fragments.PermissionsFragment;
 

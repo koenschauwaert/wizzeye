@@ -23,7 +23,7 @@ package app.wizzeye.app.fragments;
 import android.app.Fragment;
 
 import app.wizzeye.app.MainActivity;
-import app.wizzeye.app.call.CallService;
+import app.wizzeye.app.service.CallService;
 
 
 /**
