@@ -42,7 +42,7 @@
     <string name="notif_channel_description">Information about ongoing call</string>
 
     <!-- Common labels -->
-    <string name="hangup">Hangup</string>
+    <string name="hangup">End call</string>
 
     <!-- PermissionsFragment -->
     <string name="permissions_title">Permissions required</string>
