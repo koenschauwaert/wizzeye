@@ -23,6 +23,8 @@
 let params = new URLSearchParams(document.location.search.substring(1));
 let role = params.get('role') || 'observer';
 
+$("#nojs").hide();
+
 var mediaStream;
 var pc;
 function create_pc() {
