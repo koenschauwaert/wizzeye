@@ -27,13 +27,19 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import app.wizzeye.app.R;
+import app.wizzeye.app.service.CallState;
 
 public class ConnectingFragment extends InRoomFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_connecting, container, false);
-        ((TextView) view.findViewById(R.id.status)).setText(mService.getState().title);
+        CallState state = mService.getState();
+        ((TextView) view.findViewById(R.id.status)).setText(state.title);
+        if (state.hint != 0)
+            ((TextView) view.findViewById(R.id.hint)).setText(state.hint);
+        else
+            view.findViewById(R.id.hint).setVisibility(View.GONE);
         return view;
     }
 

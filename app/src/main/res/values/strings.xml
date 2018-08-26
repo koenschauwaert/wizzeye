@@ -26,6 +26,10 @@
     <string name="state_establishing">Establishing video connection</string>
     <string name="state_call_in_progress">Call in progress</string>
 
+    <string name="state_hint_waiting_for_network">Make sure airplane mode is off, and you are connected to the internet.</string>
+    <string name="state_hint_waiting_for_headset">Please connect the Iristick pocket unit and smart glasses.</string>
+    <string name="state_hint_waiting_for_observer">Please direct the remote observer to this room.  You can use the share button above to share a direct link.</string>
+
     <!-- Errors -->
     <string name="error_server_unreachable">The Wizzeye server could not be reached.  Try again later or choose another server in the settings.</string>
     <string name="error_services_not_installed">The Iristick Services are not installed.  Please install them from the <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">Play Store</a> and try again.</string>

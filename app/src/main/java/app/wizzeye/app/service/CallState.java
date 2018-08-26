@@ -31,21 +31,23 @@ import app.wizzeye.app.fragments.ErrorFragment;
 import app.wizzeye.app.fragments.RoomSelectionFragment;
 
 public enum CallState {
-    IDLE(RoomSelectionFragment.class, R.string.state_idle),
-    ERROR(ErrorFragment.class, R.string.state_error),
-    WAITING_FOR_NETWORK(ConnectingFragment.class, R.string.state_waiting_for_network),
-    CONNECTING_TO_SERVER(ConnectingFragment.class, R.string.state_connecting_to_server),
-    WAITING_FOR_OBSERVER(ConnectingFragment.class, R.string.state_waiting_for_observer),
-    WAITING_FOR_HEADSET(ConnectingFragment.class, R.string.state_waiting_for_headset),
-    ESTABLISHING(ConnectingFragment.class, R.string.state_establishing),
-    CALL_IN_PROGRESS(CallFragment.class, R.string.state_call_in_progress),
+    IDLE(RoomSelectionFragment.class, R.string.state_idle, 0),
+    ERROR(ErrorFragment.class, R.string.state_error, 0),
+    WAITING_FOR_NETWORK(ConnectingFragment.class, R.string.state_waiting_for_network, R.string.state_hint_waiting_for_network),
+    CONNECTING_TO_SERVER(ConnectingFragment.class, R.string.state_connecting_to_server, 0),
+    WAITING_FOR_OBSERVER(ConnectingFragment.class, R.string.state_waiting_for_observer, R.string.state_hint_waiting_for_observer),
+    WAITING_FOR_HEADSET(ConnectingFragment.class, R.string.state_waiting_for_headset, R.string.state_hint_waiting_for_headset),
+    ESTABLISHING(ConnectingFragment.class, R.string.state_establishing, 0),
+    CALL_IN_PROGRESS(CallFragment.class, R.string.state_call_in_progress, 0),
     ;
 
     @NonNull public final Class<? extends BaseFragment> fragmentClass;
     @StringRes public final int title;
+    @StringRes public final int hint;
 
-    CallState(@NonNull Class<? extends BaseFragment> fragmentClass, @StringRes int title) {
+    CallState(@NonNull Class<? extends BaseFragment> fragmentClass, @StringRes int title, @StringRes int hint) {
         this.fragmentClass = fragmentClass;
         this.title = title;
+        this.hint = hint;
     }
 }

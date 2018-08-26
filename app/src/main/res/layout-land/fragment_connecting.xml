@@ -61,6 +61,20 @@
         app:layout_constraintStart_toEndOf="@+id/spacer"
         app:layout_constraintEnd_toStartOf="@+id/right_guideline"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/hint"
+        app:layout_constraintVertical_chainStyle="packed"
+        />
+
+    <TextView
+        android:id="@+id/hint"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textAlignment="center"
+        tools:text="@string/state_hint_waiting_for_observer"
+        app:layout_constraintStart_toStartOf="@+id/status"
+        app:layout_constraintEnd_toEndOf="@+id/status"
+        app:layout_constraintTop_toBottomOf="@+id/status"
         app:layout_constraintBottom_toTopOf="@+id/hangup"
         />
 
