@@ -48,8 +48,9 @@ let UI = {
     $(box).show();
   },
 
-  showStatus: function(msg) {
+  showStatus: function(msg, hint) {
     $("#status").text(msg);
+    $("#status-hint").text(hint);
     this.show("#statusbox");
   },
 
@@ -87,6 +88,15 @@ let STATUS_MESSAGES = [
   "Call in progress" // CALL_IN_PROGRESS
 ];
 
+let STATUS_HINTS = [
+  "", // LOADING
+  "", // WEBSOCKET_CONNECT
+  "Please direct the remote glass wearer to this room.  You can send the URL of this page to open on an Android phone with the Wizzeye app installed.", // WAITING_FOR_JOIN
+  "Please allow this website to access your microphone.", // GET_USER_MEDIA
+  "", // ESTABLISHING
+  "" // CALL_IN_PROGRESS
+];
+
 let Err = {
   WEBSOCKET_ERROR: "The Wizzeye server is momentarily unreachable.  Try reloading this page.",
   INVALID_ROOM: "The chosen room name is not valid.  Try choosing another name.",
@@ -116,7 +126,7 @@ function setState(newState, error, errorText) {
     break;
   default:
     console.info(STATUS_MESSAGES[state]);
-    UI.showStatus(STATUS_MESSAGES[state]);
+    UI.showStatus(STATUS_MESSAGES[state], STATUS_HINTS[state]);
   }
 }
 
