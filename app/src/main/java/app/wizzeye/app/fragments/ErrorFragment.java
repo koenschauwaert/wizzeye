@@ -43,7 +43,7 @@ public class ErrorFragment extends InRoomFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mError.setText(getCallService().getError().message);
+        mError.setText(mService.getError().message);
     }
 
 }

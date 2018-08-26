@@ -45,7 +45,7 @@ public class PermissionsFragment extends BaseFragment {
     private void requestPermissions() {
         List<String> ungranted = new ArrayList<>();
         for (String p : MainActivity.PERMISSIONS) {
-            if (getMainActivity().checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED)
+            if (mMainActivity.checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED)
                 ungranted.add(p);
         }
         requestPermissions(ungranted.toArray(new String[ungranted.size()]), 0);
@@ -53,7 +53,7 @@ public class PermissionsFragment extends BaseFragment {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        getMainActivity().checkPermissions();
+        mMainActivity.checkPermissions();
     }
 
 }

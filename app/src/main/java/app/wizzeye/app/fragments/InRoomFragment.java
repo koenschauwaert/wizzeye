@@ -51,16 +51,16 @@ public abstract class InRoomFragment extends BaseFragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.hangup).setOnClickListener(v -> getCallService().hangup());
+        view.findViewById(R.id.hangup).setOnClickListener(v -> mService.hangup());
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.share_link:
-            getMainActivity().startActivity(new Intent(Intent.ACTION_SEND)
+            mMainActivity.startActivity(new Intent(Intent.ACTION_SEND)
                 .setType("text/plain")
-                .putExtra(Intent.EXTRA_TEXT, getCallService().getRoomLink()));
+                .putExtra(Intent.EXTRA_TEXT, mService.getRoomLink()));
             return true;
         default:
             return super.onOptionsItemSelected(item);

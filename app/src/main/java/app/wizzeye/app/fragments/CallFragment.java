@@ -40,17 +40,17 @@ public class CallFragment extends InRoomFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_call, container, false);
         mVideo = view.findViewById(R.id.video);
-        mVideo.setOnClickListener(v -> getCallService().triggerAF());
+        mVideo.setOnClickListener(v -> mService.triggerAF());
 
         SeekBar zoom = view.findViewById(R.id.zoom);
-        zoom.setProgress(getCallService().getZoom());
+        zoom.setProgress(mService.getZoom());
         zoom.setOnSeekBarChangeListener(mZoomListener);
 
         FloatingActionButton torch = view.findViewById(R.id.torch);
-        torch.setActivated(getCallService().getTorch());
+        torch.setActivated(mService.getTorch());
         torch.setOnClickListener(v -> {
             boolean active = !v.isActivated();
-            getCallService().setTorch(active);
+            mService.setTorch(active);
             v.setActivated(active);
         });
 
@@ -60,19 +60,19 @@ public class CallFragment extends InRoomFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mVideo.init(getCallService().getEglBase().getEglBaseContext(), null);
+        mVideo.init(mService.getEglBase().getEglBaseContext(), null);
         mVideo.setEnableHardwareScaler(true);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        getCallService().addVideoSink(mVideo);
+        mService.addVideoSink(mVideo);
     }
 
     @Override
     public void onStop() {
-        getCallService().removeVideoSink(mVideo);
+        mService.removeVideoSink(mVideo);
         mVideo.release();
         super.onStop();
     }
@@ -80,7 +80,7 @@ public class CallFragment extends InRoomFragment {
     private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            getCallService().setZoom(progress);
+            mService.setZoom(progress);
         }
 
         @Override

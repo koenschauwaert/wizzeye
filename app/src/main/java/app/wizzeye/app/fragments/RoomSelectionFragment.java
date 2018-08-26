@@ -108,7 +108,7 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
         if (room.isEmpty() || validateRoomName(room) != 0)
             return;
         Uri server = Uri.parse(mPreferences.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
-        getMainActivity().startService(new Intent(getMainActivity(), CallService.class)
+        mMainActivity.startService(new Intent(mMainActivity, CallService.class)
             .setData(Uri.withAppendedPath(server, Uri.encode(room))));
     }
 

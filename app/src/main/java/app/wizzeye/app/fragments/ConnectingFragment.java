@@ -43,7 +43,7 @@ public class ConnectingFragment extends InRoomFragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mStatus.setText(getCallService().getState().title);
+        mStatus.setText(mService.getState().title);
     }
 
 }

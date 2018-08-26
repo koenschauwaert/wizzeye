@@ -21,6 +21,7 @@
 package app.wizzeye.app.fragments;
 
 import android.app.Fragment;
+import android.content.Context;
 
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.service.CallService;
@@ -31,12 +32,14 @@ import app.wizzeye.app.service.CallService;
  */
 public abstract class BaseFragment extends Fragment {
 
-    protected MainActivity getMainActivity() {
-        return (MainActivity) getActivity();
-    }
+    protected MainActivity mMainActivity;
+    protected CallService mService;
 
-    protected CallService getCallService() {
-        return getMainActivity().getCallService();
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mMainActivity = (MainActivity) getActivity();
+        mService = mMainActivity.getCallService();
     }
 
 }
