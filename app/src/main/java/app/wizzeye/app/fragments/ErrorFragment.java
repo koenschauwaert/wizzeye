@@ -21,7 +21,6 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,19 +30,11 @@ import app.wizzeye.app.R;
 
 public class ErrorFragment extends InRoomFragment {
 
-    private TextView mError;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_error, container, false);
-        mError = view.findViewById(R.id.error);
+        ((TextView) view.findViewById(R.id.error)).setText(mService.getError().message);
         return view;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mError.setText(mService.getError().message);
     }
 
 }

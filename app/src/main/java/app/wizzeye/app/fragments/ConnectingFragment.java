@@ -21,7 +21,6 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,19 +30,11 @@ import app.wizzeye.app.R;
 
 public class ConnectingFragment extends InRoomFragment {
 
-    private TextView mStatus;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_connecting, container, false);
-        mStatus = view.findViewById(R.id.status);
+        ((TextView) view.findViewById(R.id.status)).setText(mService.getState().title);
         return view;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mStatus.setText(mService.getState().title);
     }
 
 }

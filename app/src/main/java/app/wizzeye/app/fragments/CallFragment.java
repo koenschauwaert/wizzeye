@@ -21,7 +21,6 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +39,8 @@ public class CallFragment extends InRoomFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_call, container, false);
         mVideo = view.findViewById(R.id.video);
+        mVideo.init(mService.getEglBase().getEglBaseContext(), null);
+        mVideo.setEnableHardwareScaler(true);
         mVideo.setOnClickListener(v -> mService.triggerAF());
 
         SeekBar zoom = view.findViewById(R.id.zoom);
@@ -55,13 +56,6 @@ public class CallFragment extends InRoomFragment {
         });
 
         return view;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mVideo.init(mService.getEglBase().getEglBaseContext(), null);
-        mVideo.setEnableHardwareScaler(true);
     }
 
     @Override
