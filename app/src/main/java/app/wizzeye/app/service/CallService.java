@@ -360,11 +360,11 @@ public class CallService extends Service {
             mConnectivityManager.unregisterNetworkCallback(mNetworkMonitor);
             mNetworkMonitor = null;
         }
-        mUri = null;
 
         if (limit.ordinal() >= CallState.ERROR.ordinal())
             return;
 
+        mUri = null;
         stopForeground(true);
         stopSelf();
     }
