@@ -213,8 +213,10 @@ public class CallService extends Service {
         builder.setSmallIcon(R.drawable.notification);
         builder.setColor(getColor(R.color.primary));
         builder.setContentTitle(getString(mState.title));
-        if (mState == CallState.ERROR)
+        if (mState == CallState.ERROR) {
             builder.setContentText(getString(mError.message));
+            builder.setStyle(new Notification.BigTextStyle());
+        }
         builder.setSubText(getRoomName());
         builder.setContentIntent(PendingIntent.getActivity(this, 0,
             new Intent(this, MainActivity.class), 0));

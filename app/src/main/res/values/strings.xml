@@ -27,16 +27,16 @@
     <string name="state_call_in_progress">Call in progress</string>
 
     <!-- Errors -->
-    <string name="error_server_unreachable">Could not reach Wizzeye server.</string>
-    <string name="error_services_not_installed">Iristick Services are not installed.</string>
-    <string name="error_services_outdated">Please update Iristick Services.</string>
-    <string name="error_services_unknown">Unknown error in Iristick Services.</string>
-    <string name="error_invalid_room">The chosen room name is not valid.</string>
-    <string name="error_room_busy">Another glass wearer has already joined the room.</string>
-    <string name="error_signaling">Unknown error while communicating with the Wizzeye server.</string>
-    <string name="error_webrtc">Unknown error while setting up video communication.</string>
-    <string name="error_ice">A peer-to-peer link could not be established.</string>
-    <string name="error_camera">Something went wrong while opening the camera.</string>
+    <string name="error_server_unreachable">The Wizzeye server could not be reached.  Try again later or choose another server in the settings.</string>
+    <string name="error_services_not_installed">The Iristick Services are not installed.  Please install them from the <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">Play Store</a> and try again.</string>
+    <string name="error_services_outdated">The Iristick Services installed on this device are outdated.  Please upgrade and try again.</string>
+    <string name="error_services_unknown">An error has occurred in the Iristick Services.  Check the logs for more details.</string>
+    <string name="error_invalid_room">The chosen room name is not valid.  Try choosing another name.</string>
+    <string name="error_room_busy">Another glass wearer has already joined the room.  You cannot join this room until she has left.</string>
+    <string name="error_signaling">An error has occurred while communicating with the Wizzeye server.  Check the logs for more details.</string>
+    <string name="error_webrtc">An error has occurred while establishing the video communication.  Check the logs for more details.</string>
+    <string name="error_ice">We could not reach the observer\'s device.  This could be due to restrictive firewalls.  Consider adding a TURN server in the settings.</string>
+    <string name="error_camera">The cameras of the Iristick smart glasses experienced an error.  Make sure no other apps are using the cameras and try again.</string>
 
     <!-- Notification -->
     <string name="notif_channel_name">Ongoing call</string>
@@ -58,7 +58,7 @@
     <string name="roomselection_error_invalid">Only a-z, 0-9, "-" and "_" are allowed</string>
 
     <!-- ErrorFragment -->
-    <string name="error_title">An error occurred</string>
+    <string name="error_title">Oops, something went wrong</string>
 
     <!-- LogsActivity -->
     <string name="logs_title">Logs</string>
