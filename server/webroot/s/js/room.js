@@ -88,13 +88,13 @@ let STATUS_MESSAGES = [
 ];
 
 let Err = {
-  WEBSOCKET_ERROR: "There was an error when communicating with the Wizzeye server.",
-  INVALID_ROOM: "The chosen room name is not valid.",
-  ROOM_BUSY: "Another observer has already joined the room.",
-  SIGNALING: "An unknown error occurred while communicating with the Wizzeye server.",
-  MEDIA_DENIED: "The microphone on this device could not be accessed.",
-  WEBRTC: "An error occurred while establishing the video communication.",
-  ICE: "A peer-to-peer link could not be established."
+  WEBSOCKET_ERROR: "The Wizzeye server is momentarily unreachable.  Try reloading this page.",
+  INVALID_ROOM: "The chosen room name is not valid.  Try choosing another name.",
+  ROOM_BUSY: "Another observer has already joined the room.  You cannot join this room until she has left.",
+  SIGNALING: "An error has occurred while communicating with the Wizzeye server.  Try reloading this page.",
+  MEDIA_DENIED: "The microphone on this device could not be accessed.  Check that you have a microphone and that your browser settings allow this website to use it.",
+  WEBRTC: "An error occurred while establishing the video communication.  Try reloading this page.",
+  ICE: "We could not reach the glass wearer's device.  This could be due to restrictive firewalls.  Consider adding a TURN server in the settings of the mobile app."
 };
 
 let state = State.LOADING; // global state variable
