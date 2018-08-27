@@ -45,7 +45,7 @@
         android:id="@+id/chevron"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:tint="@color/primaryDark"
+        android:tint="?android:attr/textColorPrimary"
         android:src="@drawable/chevron_right"
         android:contentDescription="@string/roomselection_join"
         app:layout_constraintEnd_toEndOf="parent"

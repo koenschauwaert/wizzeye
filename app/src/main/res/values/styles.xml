@@ -8,7 +8,7 @@
         <item name="android:colorBackground">@color/background_bottom</item>
         <item name="android:windowBackground">@drawable/background</item>
         <item name="android:statusBarColor">@color/background_top</item>
-        <item name="android:navigationBarColor">@color/background_bottom</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <item name="android:buttonStyle">@style/AppTheme.Button</item>
         <item name="actionBarStyle">@style/AppTheme.ActionBar</item>

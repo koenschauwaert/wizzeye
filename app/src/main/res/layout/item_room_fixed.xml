@@ -35,7 +35,7 @@
         android:id="@+id/chevron"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:tint="@color/primaryDark"
+        android:tint="?android:attr/textColorPrimary"
         android:src="@drawable/chevron_right"
         tools:ignore="ContentDescription"
         app:layout_constraintEnd_toEndOf="parent"
