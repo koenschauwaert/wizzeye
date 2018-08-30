@@ -26,20 +26,20 @@
     <string name="state_establishing">Establishing video connection</string>
     <string name="state_call_in_progress">Call in progress</string>
 
-    <string name="state_hint_waiting_for_network">Make sure airplane mode is off, and you are connected to the internet.</string>
+    <string name="state_hint_waiting_for_network">Make sure airplane mode is off and you are connected to the internet.</string>
     <string name="state_hint_waiting_for_headset">Please connect the Iristick pocket unit and smart glasses.</string>
-    <string name="state_hint_waiting_for_observer">Please direct the remote observer to this room.  You can use the share button above to share a direct link.</string>
+    <string name="state_hint_waiting_for_observer">Please direct the remote observer to https://wizzeye.app and use the room name as shown above.  You can also use the share button above to share a direct link.</string>
 
     <!-- Errors -->
-    <string name="error_server_unreachable">The Wizzeye server could not be reached.  Try again later or choose another server in the settings.</string>
-    <string name="error_services_not_installed">The Iristick Services are not installed.  Please install them from the <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">Play Store</a> and try again.</string>
-    <string name="error_services_outdated">The Iristick Services installed on this device are outdated.  Please upgrade and try again.</string>
+    <string name="error_server_unreachable">The Wizzeye server could not be reached.  Make sure you are running the latest Wizzeye, and try again later or choose another server in the settings.</string>
+    <string name="error_services_not_installed">The Iristick Services are not installed.  Please install from the <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">Play Store</a> and try again.</string>
+    <string name="error_services_outdated">The Iristick Services installed on this device are outdated.  Please <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">update</a> and try again.</string>
     <string name="error_services_unknown">An error has occurred in the Iristick Services.  Check the logs for more details.</string>
-    <string name="error_invalid_room">The chosen room name is not valid.  Try choosing another name.</string>
-    <string name="error_room_busy">Another glass wearer has already joined the room.  You cannot join this room until she has left.</string>
+    <string name="error_invalid_room">The chosen room name is not valid.  Go back and choose another name.</string>
+    <string name="error_room_busy">Another glass wearer has already joined the room.  You cannot join this room until this person left.</string>
     <string name="error_signaling">An error has occurred while communicating with the Wizzeye server.  Check the logs for more details.</string>
     <string name="error_webrtc">An error has occurred while establishing the video communication.  Check the logs for more details.</string>
-    <string name="error_ice">We could not reach the observer\'s device.  This could be due to restrictive firewalls.  Consider adding a TURN server in the settings.</string>
+    <string name="error_ice">We could not reach the remote observer\'s device.  This could be due to restrictive firewalls.  Consider adding a TURN server in the settings.</string>
     <string name="error_camera">The cameras of the Iristick smart glasses experienced an error.  Make sure no other apps are using the cameras and try again.</string>
 
     <!-- Notification -->
@@ -51,7 +51,7 @@
 
     <!-- PermissionsFragment -->
     <string name="permissions_title">Permissions required</string>
-    <string name="permissions_description">Wizzeye needs access to camera and microphone to make communication possible.</string>
+    <string name="permissions_description">Wizzeye needs access to the camera and microphone to make communication possible.</string>
     <string name="permissions_grant">Grant permissions</string>
 
     <!-- RoomSelectionFragment -->
