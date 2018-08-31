@@ -32,11 +32,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -45,55 +42,65 @@ import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
 import app.wizzeye.app.service.CallService;
 
-public class RoomSelectionFragment extends BaseFragment implements AdapterView.OnItemClickListener {
+public class RoomSelectionFragment extends BaseFragment implements TextWatcher {
 
     private static final Pattern ROOM_CHARACTERS = Pattern.compile("^[-_a-z0-9]*$");
 
-    private static final String STATE_RANDOM_ROOM = "randomRoom";
-    private static final String STATE_CUSTOM_ROOM = "customRoom";
+    private static final String STATE_ROOM = "room";
 
     private SharedPreferences mPreferences;
-    private String mRandomRoom;
-    private String mCustomRoom;
+    private String[] mColors;
+    private String[] mAnimals;
+    private Random mRandom;
+    private Button mJoin;
+    private EditText mRoom;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        mColors = getResources().getStringArray(R.array.random_colors);
+        mAnimals = getResources().getStringArray(R.array.random_animals);
+        mRandom = new Random();
 
+        String room = null;
         if (savedInstanceState != null) {
-            mRandomRoom = savedInstanceState.getString(STATE_RANDOM_ROOM);
-            mCustomRoom = savedInstanceState.getString(STATE_CUSTOM_ROOM);
+            room = savedInstanceState.getString(STATE_ROOM);
         }
-        if (mRandomRoom == null)
-            mRandomRoom = generateRandomRoom();
-        if (mCustomRoom == null)
-            mCustomRoom = mPreferences.getString(SettingsActivity.KEY_LAST_ROOM, "");
+        if (room == null)
+            room = mPreferences.getString(SettingsActivity.KEY_LAST_ROOM, null);
+        if (room == null)
+            room = generateRandomRoom();
 
         View view = inflater.inflate(R.layout.fragment_room_selection, container, false);
-        ListView list = view.findViewById(R.id.list);
-        list.setAdapter(new RoomsAdapter());
-        list.setOnItemClickListener(this);
+        mJoin = view.findViewById(R.id.join);
+        mJoin.setOnClickListener(v -> joinRoom());
+        view.findViewById(R.id.random).setOnClickListener(v -> mRoom.setText(generateRandomRoom()));
+        mRoom = view.findViewById(R.id.room);
+        mRoom.addTextChangedListener(this);
+        mRoom.setText(room);
+        mRoom.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO) {
+                joinRoom();
+                return true;
+            }
+            return false;
+        });
+
         return view;
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString(STATE_RANDOM_ROOM, mRandomRoom);
-        outState.putString(STATE_CUSTOM_ROOM, mCustomRoom);
+        outState.putString(STATE_ROOM, mRoom.getText().toString());
     }
 
     private String generateRandomRoom() {
-        String[] colors = getResources().getStringArray(R.array.random_colors);
-        String[] animals = getResources().getStringArray(R.array.random_animals);
-        Random random = new Random();
-        return colors[random.nextInt(colors.length)] + "-" + animals[random.nextInt(animals.length)];
+        return mColors[mRandom.nextInt(mColors.length)] + "-" + mAnimals[mRandom.nextInt(mAnimals.length)];
     }
 
     private @StringRes int validateRoomName(String name) {
-        if (name.isEmpty()) {
-            return 0;
-        } else if (!ROOM_CHARACTERS.matcher(name).matches()) {
+        if (!ROOM_CHARACTERS.matcher(name).matches()) {
             return R.string.roomselection_error_invalid;
         } else if (name.length() < 5) {
             return R.string.roomselection_error_short;
@@ -104,8 +111,9 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
         }
     }
 
-    private void joinRoom(String room) {
-        if (room.isEmpty() || validateRoomName(room) != 0)
+    private void joinRoom() {
+        String room = mRoom.getText().toString();
+        if (validateRoomName(room) != 0)
             return;
         Uri server = Uri.parse(mPreferences.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
         mMainActivity.startService(new Intent(mMainActivity, CallService.class)
@@ -113,121 +121,31 @@ public class RoomSelectionFragment extends BaseFragment implements AdapterView.O
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        switch (RoomSelection.values()[position]) {
-        case RANDOM:
-            joinRoom(mRandomRoom);
-            break;
-        case CUSTOM:
-            joinRoom(mCustomRoom);
-            break;
-        }
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
     }
 
-    private enum RoomSelection {
-        RANDOM,
-        CUSTOM,
-        ;
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
     }
 
-    private class RoomsAdapter extends BaseAdapter {
-        @Override
-        public int getCount() {
-            return RoomSelection.values().length;
+    @Override
+    public void afterTextChanged(Editable s) {
+        String name = s.toString();
+
+        // Clean up room name
+        name = name.toLowerCase();
+        name = name.replaceAll("\\s", "-");
+        if (!name.equals(s.toString())) {
+            s.replace(0, s.length(), name);
+            return; // this method will be called again
         }
 
-        @Override
-        public RoomSelection getItem(int position) {
-            return RoomSelection.values()[position];
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public int getViewTypeCount() {
-            return getCount();
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            final View view;
-            if (convertView == null) {
-                switch (getItem(position)) {
-                case RANDOM:
-                    view = LayoutInflater.from(getContext())
-                        .inflate(R.layout.item_room_fixed, parent, false);
-                    ((TextView) view.findViewById(R.id.room)).setText(mRandomRoom);
-                    break;
-                case CUSTOM:
-                    view = LayoutInflater.from(getContext())
-                        .inflate(R.layout.item_room_editable, parent, false);
-                    EditText e = view.findViewById(R.id.room);
-                    e.addTextChangedListener(new RoomValidator(e));
-                    e.setText(mCustomRoom);
-                    e.setOnEditorActionListener((v, actionId, event) -> {
-                        if (actionId == EditorInfo.IME_ACTION_GO) {
-                            joinRoom(mCustomRoom);
-                            return true;
-                        }
-                        return false;
-                    });
-                    view.findViewById(R.id.label)
-                        .setOnClickListener(v -> joinRoom(mCustomRoom));
-                    view.findViewById(R.id.chevron)
-                        .setOnClickListener(v -> joinRoom(mCustomRoom));
-                    break;
-                default:
-                    view = null;
-                }
-            } else {
-                view = convertView;
-            }
-            return view;
-        }
-    }
-
-    private class RoomValidator implements TextWatcher {
-        private final EditText mView;
-
-        RoomValidator(EditText view) {
-            mView = view;
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            String name = s.toString();
-
-            // Clean up room name
-            name = name.toLowerCase();
-            name = name.replaceAll("\\s", "-");
-            if (!name.equals(s.toString())) {
-                s.replace(0, s.length(), name);
-                return; // this method will be called again
-            }
-
-            // Validate room name
-            @StringRes int error = validateRoomName(name);
-            mView.setError(error != 0 ? getString(error) : null);
-
-            // Save room name
-            mCustomRoom = name;
-        }
+        // Validate room name
+        @StringRes int error = validateRoomName(name);
+        mRoom.setError(error != 0 ? getString(error) : null);
+        mJoin.setEnabled(error == 0);
     }
 
 }
