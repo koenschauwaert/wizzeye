@@ -142,6 +142,13 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     }
 
     @Override
+    public void onBackPressed() {
+        BaseFragment f = (BaseFragment) getFragmentManager().findFragmentById(android.R.id.content);
+        if (f == null || !f.onBackPressed())
+            super.onBackPressed();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.settings:

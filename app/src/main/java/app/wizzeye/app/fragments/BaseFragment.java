@@ -42,4 +42,12 @@ public abstract class BaseFragment extends Fragment {
         mService = mMainActivity.getCallService();
     }
 
+    /**
+     * Called when the back button is pressed when this fragment is shown.
+     * @return {@code true} if the event was catched, {@code false} to let the default action happen
+     */
+    public boolean onBackPressed() {
+        return false;
+    }
+
 }
