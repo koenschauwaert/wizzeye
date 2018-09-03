@@ -20,11 +20,27 @@
  */
 package app.wizzeye.app.service;
 
+import android.support.annotation.DrawableRes;
+
+import app.wizzeye.app.R;
+
 public enum LaserMode {
     /** Laser always off */
-    OFF,
+    OFF(R.drawable.laser_off),
     /** Laser always on */
-    ON,
+    ON(R.drawable.laser_on),
     /** Laser on when zoomed in */
-    AUTO,
+    AUTO(R.drawable.laser_auto),
+    ;
+
+    @DrawableRes public final int icon;
+
+    LaserMode(@DrawableRes int icon) {
+        this.icon = icon;
+    }
+
+    public LaserMode next() {
+        LaserMode[] modes = LaserMode.values();
+        return modes[(ordinal() + 1) % modes.length];
+    }
 }

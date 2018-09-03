@@ -32,6 +32,7 @@ import android.widget.SeekBar;
 import org.webrtc.SurfaceViewRenderer;
 
 import app.wizzeye.app.R;
+import app.wizzeye.app.service.LaserMode;
 
 public class CallFragment extends InRoomFragment {
 
@@ -62,6 +63,8 @@ public class CallFragment extends InRoomFragment {
         mMore.setOnClickListener(v -> mDrawerLayout.openDrawer(mOptions));
 
         mOptions.getMenu().findItem(R.id.torch).setChecked(mService.getTorch());
+        mOptions.getMenu().findItem(R.id.laser).setChecked(mService.getLaser() != LaserMode.OFF);
+        mOptions.getMenu().findItem(R.id.laser).setIcon(mService.getLaser().icon);
 
         return view;
     }
@@ -121,6 +124,12 @@ public class CallFragment extends InRoomFragment {
             boolean newTorch = !mService.getTorch();
             mService.setTorch(newTorch);
             item.setChecked(newTorch);
+            break;
+        case R.id.laser:
+            LaserMode newLaser = mService.getLaser().next();
+            mService.setLaser(newLaser);
+            item.setChecked(newLaser != LaserMode.OFF);
+            item.setIcon(newLaser.icon);
             break;
         case R.id.hangup:
             mService.hangup();

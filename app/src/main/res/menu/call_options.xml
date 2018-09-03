@@ -4,6 +4,9 @@
         <item android:id="@+id/torch"
             android:icon="@drawable/torch"
             android:title="@string/call_option_torch" />
+        <item android:id="@+id/laser"
+            android:icon="@drawable/laser_off"
+            android:title="@string/call_option_laser" />
     </group>
     <item android:id="@+id/hangup"
         android:icon="@drawable/hangup"
