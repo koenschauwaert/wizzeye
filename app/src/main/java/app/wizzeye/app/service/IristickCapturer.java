@@ -70,6 +70,7 @@ class IristickCapturer implements CameraVideoCapturer {
     private boolean mFirstFrameObserved;
     private int mZoom = 0;
     private boolean mTorch = false;
+    private LaserMode mLaser = LaserMode.OFF;
 
     IristickCapturer(Headset headset, CameraEventsHandler eventsHandler) {
         if (eventsHandler == null) {
@@ -201,6 +202,19 @@ class IristickCapturer implements CameraVideoCapturer {
         });
     }
 
+    public LaserMode getLaser() {
+        return mLaser;
+    }
+
+    public void setLaser(final LaserMode laser) {
+        mCameraThreadHandler.post(() -> {
+            synchronized (mStateLock) {
+                mLaser = laser;
+                applyParametersInternal();
+            }
+        });
+    }
+
     public void triggerAF() {
         mCameraThreadHandler.post(this::triggerAFInternal);
     }
@@ -299,6 +313,17 @@ class IristickCapturer implements CameraVideoCapturer {
             } else {
                 mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
                 mRequestBuilder.set(CaptureRequest.FLASH_MODE, mTorch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
+                switch (mLaser) {
+                case OFF:
+                    mRequestBuilder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_OFF);
+                    break;
+                case ON:
+                    mRequestBuilder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_ON);
+                    break;
+                case AUTO:
+                    mRequestBuilder.set(CaptureRequest.LASER_MODE, mZoom == 0 ? CaptureRequest.LASER_MODE_OFF : CaptureRequest.LASER_MODE_ON);
+                    break;
+                }
                 if (mCameraIdx == 1)
                     mRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
                 mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);

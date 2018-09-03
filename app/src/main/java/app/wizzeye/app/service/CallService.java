@@ -190,6 +190,15 @@ public class CallService extends Service {
             mVideoCap.setTorch(torch);
     }
 
+    public LaserMode getLaser() {
+        return mVideoCap != null ? mVideoCap.getLaser() : LaserMode.OFF;
+    }
+
+    public void setLaser(LaserMode laser) {
+        if (mVideoCap != null)
+            mVideoCap.setLaser(laser);
+    }
+
     public void triggerAF() {
         if (mVideoCap != null)
             mVideoCap.triggerAF();
