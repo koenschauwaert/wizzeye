@@ -37,6 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_TURN_PASSWORD = "turn_password";
 
     public static final String KEY_LAST_ROOM = "last_room";
+    public static final String KEY_LASER_MODE = "laser_mode";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

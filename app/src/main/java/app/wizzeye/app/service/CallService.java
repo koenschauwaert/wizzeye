@@ -197,6 +197,8 @@ public class CallService extends Service {
     public void setLaser(LaserMode laser) {
         if (mVideoCap != null)
             mVideoCap.setLaser(laser);
+        mPreferences.edit().putString(SettingsActivity.KEY_LASER_MODE,
+            laser == LaserMode.AUTO ? LaserMode.AUTO.name() : LaserMode.OFF.name()).apply();
     }
 
     public void triggerAF() {
@@ -586,6 +588,11 @@ public class CallService extends Service {
         mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
         mVideoSrc = mFactory.createVideoSource(mVideoCap);
         mVideoCap.startCapture(640, 480, 30);
+        try {
+            mVideoCap.setLaser(LaserMode.valueOf(mPreferences.getString(SettingsActivity.KEY_LASER_MODE, LaserMode.OFF.name())));
+        } catch (IllegalArgumentException e) {
+            // ignore bad preference value
+        }
         mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
         mVideoTrack.setEnabled(true);
 
