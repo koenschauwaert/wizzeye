@@ -28,7 +28,7 @@
 
     <string name="state_hint_waiting_for_network">Make sure airplane mode is off and you are connected to the internet.</string>
     <string name="state_hint_waiting_for_headset">Please connect the Iristick pocket unit and smart glasses.</string>
-    <string name="state_hint_waiting_for_observer">Please direct the remote observer to https://wizzeye.app and use the room name as shown above.  You can also use the share button above to share a direct link.</string>
+    <string name="state_hint_waiting_for_observer">Please direct the remote observer to %1$s with room name ‘%2$s’.  You can also use the share button above to share a direct link.</string>
 
     <!-- Errors -->
     <string name="error_server_unreachable">The Wizzeye server could not be reached.  Make sure you are running the latest Wizzeye, and try again later or choose another server in the settings.</string>

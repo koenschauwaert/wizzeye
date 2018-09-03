@@ -21,12 +21,14 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import app.wizzeye.app.R;
+import app.wizzeye.app.SettingsActivity;
 import app.wizzeye.app.service.CallState;
 
 public class ConnectingFragment extends InRoomFragment {
@@ -36,10 +38,20 @@ public class ConnectingFragment extends InRoomFragment {
         View view = inflater.inflate(R.layout.fragment_connecting, container, false);
         CallState state = mService.getState();
         ((TextView) view.findViewById(R.id.status)).setText(state.title);
-        if (state.hint != 0)
-            ((TextView) view.findViewById(R.id.hint)).setText(state.hint);
-        else
-            view.findViewById(R.id.hint).setVisibility(View.GONE);
+        TextView hint = view.findViewById(R.id.hint);
+        if (state.hint != 0) {
+            switch (state) {
+            case WAITING_FOR_OBSERVER:
+                hint.setText(getString(state.hint,
+                    PreferenceManager.getDefaultSharedPreferences(getContext()).getString(SettingsActivity.KEY_SERVER, ""),
+                    mService.getRoomName()));
+                break;
+            default:
+                hint.setText(state.hint);
+            }
+        } else {
+            hint.setVisibility(View.GONE);
+        }
         return view;
     }
 
