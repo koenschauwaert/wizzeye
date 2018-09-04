@@ -51,7 +51,7 @@
 
     <!-- PermissionsFragment -->
     <string name="permissions_title">Permissions required</string>
-    <string name="permissions_description">Wizzeye needs access to the camera and microphone to make communication possible.</string>
+    <string name="permissions_description">Wizzeye needs access to the camera and microphone for communication and to storage to save pictures.</string>
     <string name="permissions_grant">Grant permissions</string>
 
     <!-- RoomSelectionFragment -->

@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public static final String[] PERMISSIONS = {
         Manifest.permission.CAMERA,
         Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
     };
 
     private static final String TAG = "MainActivity";
