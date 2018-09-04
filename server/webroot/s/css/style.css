@@ -31,6 +31,15 @@ body {
   color: #e6e9ee;
 }
 
+a {
+  color: #e6e9ee;
+}
+
+a:hover {
+  color: #ffc107;
+  text-decoration: none;
+}
+
 video {
   background-color: black;
   min-width: 240px;
@@ -89,4 +98,16 @@ video {
 .status-description {
   text-align: center;
   font-size: 1rem;
+}
+
+ul.linksbox {
+  list-style: none;
+  margin-top: 3rem;
+  padding: 0;
+}
+
+ul.linksbox li {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
