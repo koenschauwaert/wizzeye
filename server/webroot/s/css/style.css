@@ -36,6 +36,39 @@ body.fullscreen {
   height: 100%;
 }
 
+article {
+  max-width: 45rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 3rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+article p {
+  text-align: justify;
+}
+
+h1 {
+  font-weight: 300;
+  text-align: center;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-weight: 300;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-weight: 300;
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
 a {
   color: #e6e9ee;
 }
@@ -43,6 +76,10 @@ a {
 a:hover {
   color: #ffc107;
   text-decoration: none;
+}
+
+code {
+  color: #e6e9ee;
 }
 
 video {
@@ -115,4 +152,16 @@ ul.linksbox li {
   margin-left: auto;
   margin-right: auto;
   text-align: center;
+}
+
+@media print {
+  body {
+    color: black;
+  }
+  a {
+    color: black;
+  }
+  code {
+    color: black;
+  }
 }
