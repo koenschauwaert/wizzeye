@@ -65,7 +65,6 @@ class IristickCapturer implements CameraVideoCapturer {
     private int mFramerate;
     private CameraDevice mCamera;
     private Surface mSurface;
-    private CaptureRequest.Builder mRequestBuilder;
     private CaptureSession mCaptureSession;
     private boolean mFirstFrameObserved;
     private int mZoom = 0;
@@ -297,6 +296,24 @@ class IristickCapturer implements CameraVideoCapturer {
         }
     }
 
+    private void setupCaptureRequest(CaptureRequest.Builder builder) {
+        builder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
+        builder.set(CaptureRequest.FLASH_MODE, mTorch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
+        switch (mLaser) {
+        case OFF:
+            builder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_OFF);
+            break;
+        case ON:
+            builder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_ON);
+            break;
+        case AUTO:
+            builder.set(CaptureRequest.LASER_MODE, mZoom == 0 ? CaptureRequest.LASER_MODE_OFF : CaptureRequest.LASER_MODE_ON);
+            break;
+        }
+        if (mCameraIdx == 1)
+            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+    }
+
     private void applyParametersInternal() {
         Logging.d(TAG, "applyParametersInternal");
         checkIsOnCameraThread();
@@ -311,22 +328,11 @@ class IristickCapturer implements CameraVideoCapturer {
                 mFailureCount = 0;
                 openCamera(true);
             } else {
-                mRequestBuilder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
-                mRequestBuilder.set(CaptureRequest.FLASH_MODE, mTorch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
-                switch (mLaser) {
-                case OFF:
-                    mRequestBuilder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_OFF);
-                    break;
-                case ON:
-                    mRequestBuilder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_ON);
-                    break;
-                case AUTO:
-                    mRequestBuilder.set(CaptureRequest.LASER_MODE, mZoom == 0 ? CaptureRequest.LASER_MODE_OFF : CaptureRequest.LASER_MODE_ON);
-                    break;
-                }
-                if (mCameraIdx == 1)
-                    mRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
-                mCaptureSession.setRepeatingRequest(mRequestBuilder.build(), null, null);
+                CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                builder.addTarget(mSurface);
+                builder.set(CaptureRequest.SENSOR_FRAME_DURATION, 1000000000L / mFramerate);
+                setupCaptureRequest(builder);
+                mCaptureSession.setRepeatingRequest(builder.build(), null, null);
             }
         }
     }
@@ -335,12 +341,14 @@ class IristickCapturer implements CameraVideoCapturer {
         Logging.d(TAG, "triggerAFInternal");
         checkIsOnCameraThread();
         synchronized (mStateLock) {
-            if (mCaptureSession != null && mCameraIdx == 1) {
-                mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
-                CaptureRequest request = mRequestBuilder.build();
-                mRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
-                mCaptureSession.capture(request, null, null);
-            }
+            if (mCameraIdx != 1 || mSessionOpening || mStopping || mCaptureSession == null)
+                return;
+
+            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            builder.addTarget(mSurface);
+            setupCaptureRequest(builder);
+            builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START);
+            mCaptureSession.capture(builder.build(), null, null);
         }
     }
 
@@ -355,10 +363,6 @@ class IristickCapturer implements CameraVideoCapturer {
                 final SurfaceTexture surfaceTexture = mSurfaceHelper.getSurfaceTexture();
                 surfaceTexture.setDefaultBufferSize(mWidth, mHeight);
                 mSurface = new Surface(surfaceTexture);
-
-                mRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                mRequestBuilder.addTarget(mSurface);
-                mRequestBuilder.set(CaptureRequest.SENSOR_FRAME_DURATION, 1000000000L / mFramerate);
 
                 List<Surface> outputs = new ArrayList<>();
                 outputs.add(mSurface);
