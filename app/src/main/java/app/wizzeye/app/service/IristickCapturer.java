@@ -345,7 +345,7 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     /* Called on camera thread */
-    private CameraDevice.Listener mCameraListener = new CameraDevice.Listener() {
+    private final CameraDevice.Listener mCameraListener = new CameraDevice.Listener() {
         @Override
         public void onOpened(CameraDevice device) {
             checkIsOnCameraThread();
@@ -392,7 +392,7 @@ class IristickCapturer implements CameraVideoCapturer {
         }
     };
 
-    private CaptureSession.Listener mCaptureSessionListener = new CaptureSession.Listener() {
+    private final CaptureSession.Listener mCaptureSessionListener = new CaptureSession.Listener() {
         @Override
         public void onConfigured(CaptureSession session) {
             checkIsOnCameraThread();
@@ -429,7 +429,7 @@ class IristickCapturer implements CameraVideoCapturer {
         public void onReady(CaptureSession session) {}
     };
 
-    private SurfaceTextureHelper.OnTextureFrameAvailableListener mFrameAvailableListener = new SurfaceTextureHelper.OnTextureFrameAvailableListener() {
+    private final SurfaceTextureHelper.OnTextureFrameAvailableListener mFrameAvailableListener = new SurfaceTextureHelper.OnTextureFrameAvailableListener() {
         @Override
         public void onTextureFrameAvailable(int oesTextureId, float[] transformMatrix, long timestampNs) {
             checkIsOnCameraThread();
