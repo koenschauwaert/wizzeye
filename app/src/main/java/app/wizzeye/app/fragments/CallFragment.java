@@ -21,6 +21,7 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
@@ -35,6 +36,8 @@ import app.wizzeye.app.R;
 public class CallFragment extends InRoomFragment {
 
     private SurfaceViewRenderer mVideo;
+    private SeekBar mZoom;
+    private FloatingActionButton mMore;
     private DrawerLayout mDrawerLayout;
     private NavigationView mOptions;
 
@@ -46,14 +49,16 @@ public class CallFragment extends InRoomFragment {
         mVideo.setEnableHardwareScaler(true);
         mVideo.setOnClickListener(v -> mService.triggerAF());
 
-        SeekBar zoom = view.findViewById(R.id.zoom);
-        zoom.setProgress(mService.getZoom());
-        zoom.setOnSeekBarChangeListener(mZoomListener);
+        mZoom = view.findViewById(R.id.zoom);
+        mZoom.setProgress(mService.getZoom());
+        mZoom.setOnSeekBarChangeListener(mZoomListener);
 
         mDrawerLayout = view.findViewById(R.id.drawer_layout);
+        mDrawerLayout.addDrawerListener(mDrawerListener);
         mOptions = view.findViewById(R.id.options);
         mOptions.setNavigationItemSelectedListener(mOptionsListener);
-        view.findViewById(R.id.more).setOnClickListener(v -> mDrawerLayout.openDrawer(mOptions));
+        mMore = view.findViewById(R.id.more);
+        mMore.setOnClickListener(v -> mDrawerLayout.openDrawer(mOptions));
 
         mOptions.getMenu().findItem(R.id.torch).setChecked(mService.getTorch());
 
@@ -94,6 +99,18 @@ public class CallFragment extends InRoomFragment {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+    };
+
+    private final DrawerLayout.DrawerListener mDrawerListener = new DrawerLayout.SimpleDrawerListener() {
+        @Override
+        public void onDrawerSlide(View drawerView, float slideOffset) {
+            float alpha = 1.0f - Math.min(1.0f, slideOffset * 2);
+            mZoom.setAlpha(alpha);
+            mMore.setAlpha(alpha);
+            int visibility = (alpha == 0.0f ? View.GONE : View.VISIBLE);
+            mZoom.setVisibility(visibility);
+            mMore.setVisibility(visibility);
         }
     };
 
