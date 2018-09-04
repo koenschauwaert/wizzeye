@@ -21,7 +21,8 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,8 @@ import app.wizzeye.app.R;
 public class CallFragment extends InRoomFragment {
 
     private SurfaceViewRenderer mVideo;
+    private DrawerLayout mDrawerLayout;
+    private NavigationView mOptions;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -47,13 +50,12 @@ public class CallFragment extends InRoomFragment {
         zoom.setProgress(mService.getZoom());
         zoom.setOnSeekBarChangeListener(mZoomListener);
 
-        FloatingActionButton torch = view.findViewById(R.id.torch);
-        torch.setActivated(mService.getTorch());
-        torch.setOnClickListener(v -> {
-            boolean active = !v.isActivated();
-            mService.setTorch(active);
-            v.setActivated(active);
-        });
+        mDrawerLayout = view.findViewById(R.id.drawer_layout);
+        mOptions = view.findViewById(R.id.options);
+        mOptions.setNavigationItemSelectedListener(mOptionsListener);
+        view.findViewById(R.id.more).setOnClickListener(v -> mDrawerLayout.openDrawer(mOptions));
+
+        mOptions.getMenu().findItem(R.id.torch).setChecked(mService.getTorch());
 
         return view;
     }
@@ -71,6 +73,15 @@ public class CallFragment extends InRoomFragment {
         super.onStop();
     }
 
+    @Override
+    public boolean onBackPressed() {
+        if (mDrawerLayout.isDrawerOpen(mOptions)) {
+            mDrawerLayout.closeDrawers();
+            return true;
+        }
+        return super.onBackPressed();
+    }
+
     private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -84,6 +95,21 @@ public class CallFragment extends InRoomFragment {
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
         }
+    };
+
+    private final NavigationView.OnNavigationItemSelectedListener mOptionsListener = item -> {
+        switch (item.getItemId()) {
+        case R.id.torch:
+            boolean newTorch = !mService.getTorch();
+            mService.setTorch(newTorch);
+            item.setChecked(newTorch);
+            break;
+        case R.id.hangup:
+            mService.hangup();
+            mDrawerLayout.closeDrawers();
+            break;
+        }
+        return false;
     };
 
 }

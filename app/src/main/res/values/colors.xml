@@ -12,4 +12,6 @@
     <color name="buttonNormal">@color/primaryDark</color>
     <color name="buttonDisabled">#8016373f</color>
     <color name="buttonLinkPressed">#8016373f</color>
+
+    <color name="optionsBackground">#c016373f</color>
 </resources>
