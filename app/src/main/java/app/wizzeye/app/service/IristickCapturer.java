@@ -28,6 +28,7 @@ import android.media.ImageReader;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
@@ -38,7 +39,6 @@ import com.iristick.smartglass.core.camera.CaptureRequest;
 import com.iristick.smartglass.core.camera.CaptureSession;
 
 import org.webrtc.CameraVideoCapturer;
-import org.webrtc.Logging;
 import org.webrtc.RendererCommon;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoFrame;
@@ -134,14 +134,14 @@ class IristickCapturer implements CameraVideoCapturer {
 
     @Override
     public void startCapture(int width, int height, int framerate) {
-        Logging.d(TAG, "startCapture: " + width + "x" + height + "@" + framerate);
+        Log.d(TAG, "startCapture: " + width + "x" + height + "@" + framerate);
 
         if (mAppContext == null)
             throw new IllegalStateException("CameraCapturer must be initialized before calling startCapture");
 
         synchronized (mStateLock) {
             if (mSessionOpening || mCaptureSession != null) {
-                Logging.w(TAG, "Capture already started");
+                Log.w(TAG, "Capture already started");
                 return;
             }
 
@@ -155,16 +155,16 @@ class IristickCapturer implements CameraVideoCapturer {
 
     @Override
     public void stopCapture() {
-        Logging.d(TAG, "stopCapture");
+        Log.d(TAG, "stopCapture");
 
         synchronized (mStateLock) {
             mStopping = true;
             while (mSessionOpening) {
-                Logging.d(TAG, "stopCapture: Waiting for session to open");
+                Log.d(TAG, "stopCapture: Waiting for session to open");
                 try {
                     mStateLock.wait();
                 } catch (InterruptedException e) {
-                    Logging.w(TAG, "stopCapture: Interrupted while waiting for session to open");
+                    Log.w(TAG, "stopCapture: Interrupted while waiting for session to open");
                     Thread.currentThread().interrupt();
                     return;
                 }
@@ -174,12 +174,12 @@ class IristickCapturer implements CameraVideoCapturer {
                 closeCamera();
                 mObserver.onCapturerStopped();
             } else {
-                Logging.d(TAG, "stopCapture: No session open");
+                Log.d(TAG, "stopCapture: No session open");
             }
             mStopping = false;
         }
 
-        Logging.d(TAG, "stopCapture: Done");
+        Log.d(TAG, "stopCapture: Done");
     }
 
     @Override
@@ -296,7 +296,7 @@ class IristickCapturer implements CameraVideoCapturer {
 
     private void checkIsOnCameraThread() {
         if(Thread.currentThread() != mCameraThreadHandler.getLooper().getThread()) {
-            Logging.e(TAG, "Check is on camera thread failed.");
+            Log.e(TAG, "Check is on camera thread failed.");
             throw new RuntimeException("Not on camera thread.");
         }
     }
@@ -349,14 +349,14 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     private void applyParametersInternal() {
-        Logging.d(TAG, "applyParametersInternal");
+        Log.d(TAG, "applyParametersInternal");
         checkIsOnCameraThread();
         synchronized (mStateLock) {
             if (mSessionOpening || mStopping || mCaptureSession == null)
                 return;
 
             if ((mZoom == 0 && mCameraIdx != 0) || (mZoom > 0 && mCameraIdx != 1)) {
-                Logging.d(TAG, "Switching cameras");
+                Log.d(TAG, "Switching cameras");
                 closeCamera();
                 mCameraIdx = (mCameraIdx + 1) % 2;
                 mFailureCount = 0;
@@ -372,7 +372,7 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     private void triggerAFInternal() {
-        Logging.d(TAG, "triggerAFInternal");
+        Log.d(TAG, "triggerAFInternal");
         checkIsOnCameraThread();
         synchronized (mStateLock) {
             if (mCameraIdx != 1 || mSessionOpening || mStopping || mCaptureSession == null)
@@ -387,7 +387,7 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     private void takePictureInternal() {
-        Logging.d(TAG, "takePictureInternal");
+        Log.d(TAG, "takePictureInternal");
         checkIsOnCameraThread();
         synchronized (mStateLock) {
             if (mSessionOpening || mStopping || mCaptureSession == null)
@@ -429,7 +429,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 if (mCamera == device || mCamera == null)
                     handleFailure("Disconnected");
                 else
-                    Logging.w(TAG, "onDisconnected from another CameraDevice");
+                    Log.w(TAG, "onDisconnected from another CameraDevice");
             }
         }
 
@@ -440,7 +440,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 if (mCamera == device || mCamera == null)
                     handleFailure("Camera device error " + error);
                 else
-                    Logging.w(TAG, "onError from another CameraDevice");
+                    Log.w(TAG, "onError from another CameraDevice");
             }
         }
     };
@@ -507,10 +507,10 @@ class IristickCapturer implements CameraVideoCapturer {
     private final ImageReader.OnImageAvailableListener mImageReaderListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            Logging.d(TAG, "onImageAvailable");
+            Log.d(TAG, "onImageAvailable");
             try (final Image image = reader.acquireLatestImage()) {
                 if (image == null) {
-                    Logging.w(TAG, "No image available in callback");
+                    Log.w(TAG, "No image available in callback");
                     return;
                 }
 
@@ -519,7 +519,7 @@ class IristickCapturer implements CameraVideoCapturer {
                     mContext.getString(R.string.app_name));
                 if (!dir.exists()) {
                     if (!dir.mkdirs()) {
-                        Logging.e(TAG, "Failed to create directory " + dir.getPath());
+                        Log.e(TAG, "Failed to create directory " + dir.getPath());
                         return;
                     }
                 }
@@ -528,7 +528,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 try (OutputStream os = new FileOutputStream(file)) {
                     Channels.newChannel(os).write(image.getPlanes()[0].getBuffer());
                 } catch (IOException e) {
-                    Logging.e(TAG, "Failed to write capture to " + file.getPath(), e);
+                    Log.e(TAG, "Failed to write capture to " + file.getPath(), e);
                     return;
                 }
                 MediaScannerConnection.scanFile(mContext, new String[] { file.toString() }, null, null);
