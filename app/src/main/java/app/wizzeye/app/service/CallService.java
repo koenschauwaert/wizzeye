@@ -206,6 +206,11 @@ public class CallService extends Service {
             mVideoCap.triggerAF();
     }
 
+    public void takePicture() {
+        if (mVideoCap != null)
+            mVideoCap.takePicture();
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Helpers
@@ -585,7 +590,7 @@ public class CallService extends Service {
         mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
 
         /* Set up video source */
-        mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
+        mVideoCap = new IristickCapturer(this, mHeadset, mCameraCallback);
         mVideoSrc = mFactory.createVideoSource(mVideoCap);
         mVideoCap.startCapture(640, 480, 30);
         try {

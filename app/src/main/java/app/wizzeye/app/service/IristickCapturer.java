@@ -21,11 +21,18 @@
 package app.wizzeye.app.service;
 
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.media.Image;
+import android.media.ImageReader;
+import android.media.MediaScannerConnection;
+import android.os.Environment;
 import android.os.Handler;
+import android.util.Size;
 import android.view.Surface;
 
 import com.iristick.smartglass.core.Headset;
+import com.iristick.smartglass.core.camera.CameraCharacteristics;
 import com.iristick.smartglass.core.camera.CameraDevice;
 import com.iristick.smartglass.core.camera.CaptureRequest;
 import com.iristick.smartglass.core.camera.CaptureSession;
@@ -36,14 +43,28 @@ import org.webrtc.RendererCommon;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoFrame;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import app.wizzeye.app.R;
 
 class IristickCapturer implements CameraVideoCapturer {
 
     private static final String TAG = "IristickCapturer";
 
+    private static final DateFormat PICTURE_FILENAME = new SimpleDateFormat("'IMG_'yyyyMMdd_HHmmssSSS'.jpg'", Locale.US);
+
     /* Initialized by constructor */
+    private final Context mContext;
     private final Headset mHeadset;
     private final CameraEventsHandler mEvents;
     private final String[] mCameraNames;
@@ -53,6 +74,7 @@ class IristickCapturer implements CameraVideoCapturer {
     private Context mAppContext;
     private CapturerObserver mObserver;
     private Handler mCameraThreadHandler;
+    private ImageReader mImageReader;
 
     /* State objects guarded by mStateLock */
     private final Object mStateLock = new Object();
@@ -71,7 +93,7 @@ class IristickCapturer implements CameraVideoCapturer {
     private boolean mTorch = false;
     private LaserMode mLaser = LaserMode.OFF;
 
-    IristickCapturer(Headset headset, CameraEventsHandler eventsHandler) {
+    IristickCapturer(Context context, Headset headset, CameraEventsHandler eventsHandler) {
         if (eventsHandler == null) {
             eventsHandler = new CameraEventsHandler() {
                 @Override
@@ -88,6 +110,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 public void onCameraClosed() {}
             };
         }
+        mContext = context;
         mHeadset = headset;
         mEvents = eventsHandler;
         mCameraNames = headset.getCameraIdList();
@@ -100,6 +123,13 @@ class IristickCapturer implements CameraVideoCapturer {
         mAppContext = applicationContext;
         mObserver = capturerObserver;
         mCameraThreadHandler = surfaceTextureHelper.getHandler();
+
+        Size[] sizes = mHeadset.getCameraCharacteristics(mCameraNames[0])
+            .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            .getSizes(CaptureRequest.FORMAT_JPEG);
+        mImageReader = ImageReader.newInstance(sizes[0].getWidth(), sizes[0].getHeight(),
+            ImageFormat.JPEG, 2);
+        mImageReader.setOnImageAvailableListener(mImageReaderListener, mCameraThreadHandler);
     }
 
     @Override
@@ -216,6 +246,10 @@ class IristickCapturer implements CameraVideoCapturer {
 
     public void triggerAF() {
         mCameraThreadHandler.post(this::triggerAFInternal);
+    }
+
+    public void takePicture() {
+        mCameraThreadHandler.post(this::takePictureInternal);
     }
 
     private void openCamera(boolean resetFailures) {
@@ -352,6 +386,20 @@ class IristickCapturer implements CameraVideoCapturer {
         }
     }
 
+    private void takePictureInternal() {
+        Logging.d(TAG, "takePictureInternal");
+        checkIsOnCameraThread();
+        synchronized (mStateLock) {
+            if (mSessionOpening || mStopping || mCaptureSession == null)
+                return;
+
+            CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            builder.addTarget(mImageReader.getSurface());
+            setupCaptureRequest(builder);
+            mCaptureSession.capture(builder.build(), null, null);
+        }
+    }
+
     /* Called on camera thread */
     private final CameraDevice.Listener mCameraListener = new CameraDevice.Listener() {
         @Override
@@ -366,6 +414,7 @@ class IristickCapturer implements CameraVideoCapturer {
 
                 List<Surface> outputs = new ArrayList<>();
                 outputs.add(mSurface);
+                outputs.add(mImageReader.getSurface());
                 mCamera.createCaptureSession(outputs, mCaptureSessionListener, mCameraThreadHandler);
             }
         }
@@ -451,6 +500,38 @@ class IristickCapturer implements CameraVideoCapturer {
                     mObserver.onFrameCaptured(frame);
                     frame.release();
                 }
+            }
+        }
+    };
+
+    private final ImageReader.OnImageAvailableListener mImageReaderListener = new ImageReader.OnImageAvailableListener() {
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            Logging.d(TAG, "onImageAvailable");
+            try (final Image image = reader.acquireLatestImage()) {
+                if (image == null) {
+                    Logging.w(TAG, "No image available in callback");
+                    return;
+                }
+
+                File dir = new File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    mContext.getString(R.string.app_name));
+                if (!dir.exists()) {
+                    if (!dir.mkdirs()) {
+                        Logging.e(TAG, "Failed to create directory " + dir.getPath());
+                        return;
+                    }
+                }
+
+                File file = new File(dir, PICTURE_FILENAME.format(new Date()));
+                try (OutputStream os = new FileOutputStream(file)) {
+                    Channels.newChannel(os).write(image.getPlanes()[0].getBuffer());
+                } catch (IOException e) {
+                    Logging.e(TAG, "Failed to write capture to " + file.getPath(), e);
+                    return;
+                }
+                MediaScannerConnection.scanFile(mContext, new String[] { file.toString() }, null, null);
             }
         }
     };
