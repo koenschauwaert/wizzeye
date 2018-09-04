@@ -51,7 +51,9 @@ public abstract class InRoomFragment extends BaseFragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.hangup).setOnClickListener(v -> mService.hangup());
+        View hangup = view.findViewById(R.id.hangup);
+        if (hangup != null)
+            hangup.setOnClickListener(v -> mService.hangup());
     }
 
     @Override
