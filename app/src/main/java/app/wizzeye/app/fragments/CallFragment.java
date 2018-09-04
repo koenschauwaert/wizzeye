@@ -52,6 +52,7 @@ public class CallFragment extends InRoomFragment {
         mZoom = view.findViewById(R.id.zoom);
         mZoom.setProgress(mService.getZoom());
         mZoom.setOnSeekBarChangeListener(mZoomListener);
+        mZoom.setOnClickListener(v -> mService.triggerAF());
 
         mDrawerLayout = view.findViewById(R.id.drawer_layout);
         mDrawerLayout.addDrawerListener(mDrawerListener);
