@@ -8,6 +8,11 @@
             android:icon="@drawable/laser_off"
             android:title="@string/call_option_laser" />
     </group>
+    <group android:id="@+id/actions_group">
+        <item android:id="@+id/take_picture"
+            android:icon="@drawable/take_picture"
+            android:title="@string/call_action_take_picture" />
+    </group>
     <item android:id="@+id/hangup"
         android:icon="@drawable/hangup"
         android:title="@string/hangup" />

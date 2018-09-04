@@ -68,6 +68,7 @@
     <!-- CallFragment -->
     <string name="call_option_torch">Flashlight</string>
     <string name="call_option_laser">Laser</string>
+    <string name="call_action_take_picture">Take picture</string>
 
     <!-- LogsActivity -->
     <string name="logs_title">Logs</string>

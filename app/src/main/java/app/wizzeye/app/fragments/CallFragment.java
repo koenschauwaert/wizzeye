@@ -131,6 +131,10 @@ public class CallFragment extends InRoomFragment {
             item.setChecked(newLaser != LaserMode.OFF);
             item.setIcon(newLaser.icon);
             break;
+        case R.id.take_picture:
+            mService.takePicture();
+            mDrawerLayout.closeDrawers();
+            break;
         case R.id.hangup:
             mService.hangup();
             mDrawerLayout.closeDrawers();
