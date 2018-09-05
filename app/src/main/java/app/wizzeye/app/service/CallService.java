@@ -261,7 +261,11 @@ public class CallService extends Service {
 
         String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
         if (!turnHost.isEmpty()) {
-            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost)
+            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=udp")
+                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
+                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
+                .createIceServer());
+            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=tcp")
                 .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
                 .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
                 .createIceServer());
