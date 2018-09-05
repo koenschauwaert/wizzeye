@@ -65,15 +65,15 @@
         app:layout_constraintBottom_toTopOf="@+id/hangup"
         />
 
-    <android.support.design.widget.FloatingActionButton
+    <Button
         android:id="@+id/hangup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        android:src="@drawable/hangup"
-        app:fabSize="normal"
+        android:layout_marginTop="16dp"
+        android:text="@string/hangup"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/error"
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
