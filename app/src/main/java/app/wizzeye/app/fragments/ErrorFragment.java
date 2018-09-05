@@ -37,6 +37,7 @@ public class ErrorFragment extends InRoomFragment {
         TextView error = view.findViewById(R.id.error);
         error.setText(mService.getError().message);
         error.setMovementMethod(LinkMovementMethod.getInstance());
+        view.findViewById(R.id.restart).setOnClickListener(v -> mService.restart());
         return view;
     }
 

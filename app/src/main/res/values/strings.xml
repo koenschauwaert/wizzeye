@@ -69,6 +69,7 @@
 
     <!-- ErrorFragment -->
     <string name="error_title">Oops, something went wrong</string>
+    <string name="error_try_again">Try again</string>
 
     <!-- CallFragment -->
     <string name="call_option_torch">Flashlight</string>
