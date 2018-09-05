@@ -160,6 +160,13 @@ public class CallService extends Service {
         }
     }
 
+    public void restart() {
+        if (mState.ordinal() > CallState.IDLE.ordinal()) {
+            disconnect(CallState.ERROR);
+            startNetworkMonitor();
+        }
+    }
+
     public void addVideoSink(VideoSink sink) {
         if (mVideoTrack != null) {
             mVideoTrack.addSink(sink);
@@ -424,7 +431,6 @@ public class CallService extends Service {
         mUri = uri;
         mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, getRoomName()).apply();
         startNetworkMonitor();
-        setState(CallState.WAITING_FOR_NETWORK);
 
         return START_REDELIVER_INTENT;
     }
@@ -456,11 +462,11 @@ public class CallService extends Service {
                     if (mState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal()) {
                         disconnect(CallState.WAITING_FOR_NETWORK);
                         startNetworkMonitor();
-                        setState(CallState.WAITING_FOR_NETWORK);
                     }
                 });
             }
         };
+        setState(CallState.WAITING_FOR_NETWORK);
         mConnectivityManager.requestNetwork(new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 .build(),
