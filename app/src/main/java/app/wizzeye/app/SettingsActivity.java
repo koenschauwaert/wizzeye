@@ -35,6 +35,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_TURN_HOSTNAME = "turn_hostname";
     public static final String KEY_TURN_USERNAME = "turn_username";
     public static final String KEY_TURN_PASSWORD = "turn_password";
+    public static final String KEY_ABOUT_VERSION = "about_version";
 
     public static final String KEY_LAST_ROOM = "last_room";
     public static final String KEY_LASER_MODE = "laser_mode";
@@ -69,6 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
+            findPreference(KEY_ABOUT_VERSION).setSummary(getString(R.string.pref_about_version_summary, BuildConfig.VERSION_NAME));
         }
 
         @Override

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <EditTextPreference
-        android:key="server"
-        android:title="@string/pref_server_title"
-        android:defaultValue="@string/pref_server_default" />
+    <PreferenceCategory android:title="@string/pref_general_category">
+
+        <EditTextPreference
+            android:key="server"
+            android:title="@string/pref_server_title"
+            android:defaultValue="@string/pref_server_default" />
+
+    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_turn_category">
 
@@ -20,6 +24,14 @@
             android:key="turn_password"
             android:title="@string/pref_turn_password"
             android:password="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_about_category">
+
+        <Preference
+            android:key="about_version"
+            android:title="@string/app_name" />
 
     </PreferenceCategory>
 
