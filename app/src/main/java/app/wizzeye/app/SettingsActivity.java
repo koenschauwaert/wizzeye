@@ -20,14 +20,21 @@
  */
 package app.wizzeye.app;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -36,6 +43,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static final String KEY_TURN_USERNAME = "turn_username";
     public static final String KEY_TURN_PASSWORD = "turn_password";
     public static final String KEY_ABOUT_VERSION = "about_version";
+    public static final String KEY_ABOUT_LEGAL = "about_legal";
 
     public static final String KEY_LAST_ROOM = "last_room";
     public static final String KEY_LASER_MODE = "laser_mode";
@@ -71,6 +79,7 @@ public class SettingsActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
             findPreference(KEY_ABOUT_VERSION).setSummary(getString(R.string.pref_about_version_summary, BuildConfig.VERSION_NAME));
+            findPreference(KEY_ABOUT_LEGAL).setOnPreferenceClickListener(mIntentClickListener);
         }
 
         @Override
@@ -94,6 +103,34 @@ public class SettingsActivity extends AppCompatActivity {
                 break;
             }
         }
+
+        /**
+         * Open preference intent, but remove Wizzeye from the list of apps to choose from.
+         */
+        private final Preference.OnPreferenceClickListener mIntentClickListener = pref -> {
+            PackageManager pm = getActivity().getPackageManager();
+            List<ResolveInfo> activities = pm.queryIntentActivities(pref.getIntent(), 0);
+            List<Intent> intents = new ArrayList<>();
+            for (ResolveInfo info : activities) {
+                if (!BuildConfig.APPLICATION_ID.equals(info.activityInfo.packageName)) {
+                    Intent intent = new Intent(pref.getIntent());
+                    intent.setPackage(info.activityInfo.packageName);
+                    intents.add(intent);
+                }
+            }
+            switch (intents.size()) {
+            case 0:
+                break; // no browser to handle this intent
+            case 1:
+                startActivity(intents.get(0));
+                break;
+            default:
+                Intent chooser = Intent.createChooser(intents.remove(0), getString(R.string.intent_chooser_open_with));
+                chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, intents.toArray(new Parcelable[intents.size()]));
+                startActivity(chooser);
+            }
+            return true;
+        };
     }
 
 }
