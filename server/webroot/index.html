@@ -39,7 +39,7 @@ SOFTWARE.
       <img src="/s/img/logo.svg" class="logo mx-auto m-sm-5" />
       <h1 class="display-3 my-auto mx-auto mr-sm-5">Wizzeye</h1>
     </div>
-    <form id="joinform" class="form-inline">
+    <form id="joinform">
       <div class="input-group input-group-lg my-2 flex-fill">
         <input type="input" class="form-control" id="room"
           autofocus="autofocus"
@@ -48,6 +48,12 @@ SOFTWARE.
         <div class="input-group-append">
           <button type="submit" class="btn btn-warning">Join room</button>
         </div>
+      </div>
+      <div class="form-check text-center">
+        <input type="checkbox" class="form-check-input" id="acceptTerms" required="required" />
+        <label class="form-check-label" for="acceptTerms">
+          I have read and accept <a href="/s/legal/">the terms of use and privacy policy</a>
+        </label>
       </div>
     </form>
     <ul class="linksbox d-flex flex-wrap w-100">

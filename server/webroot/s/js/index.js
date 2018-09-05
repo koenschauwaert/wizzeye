@@ -32,7 +32,9 @@ function pick(a) {
 $("#room").attr('placeholder', pick(colors) + "-" + pick(animals));
 
 $("#joinform").submit(function (event) {
-  let room = $("#room").val().toLowerCase() || $("#room").attr('placeholder');
-  location.pathname = "/" + room;
+  if ($("#acceptTerms").prop('checked')) {
+    let room = $("#room").val().toLowerCase() || $("#room").attr('placeholder');
+    location.pathname = "/" + room;
+  }
   event.preventDefault();
 });
