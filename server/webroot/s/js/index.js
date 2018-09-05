@@ -31,8 +31,13 @@ function pick(a) {
 
 $("#room").attr('placeholder', pick(colors) + "-" + pick(animals));
 
+if (document.cookie.split(';').filter(item => item.includes('termsAccepted=1')).length) {
+  $("#acceptTerms").prop('checked', true);
+}
+
 $("#joinform").submit(function (event) {
   if ($("#acceptTerms").prop('checked')) {
+    document.cookie = 'termsAccepted=1;max-age=31536000';
     let room = $("#room").val().toLowerCase() || $("#room").attr('placeholder');
     location.pathname = "/" + room;
   }
