@@ -75,6 +75,8 @@
     <string name="call_option_torch">Flashlight</string>
     <string name="call_option_laser">Laser</string>
     <string name="call_action_take_picture">Take picture</string>
+    <string name="call_toast_picture_taken">Picture taken</string>
+    <string name="call_toast_picture_fail">Oops, the picture could not be taken</string>
 
     <!-- LogsActivity -->
     <string name="logs_title">Logs</string>

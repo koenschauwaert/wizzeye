@@ -31,11 +31,15 @@ import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+import android.widget.Toast;
 
 import com.iristick.smartglass.core.Headset;
 import com.iristick.smartglass.core.camera.CameraCharacteristics;
 import com.iristick.smartglass.core.camera.CameraDevice;
+import com.iristick.smartglass.core.camera.CaptureFailure;
+import com.iristick.smartglass.core.camera.CaptureListener;
 import com.iristick.smartglass.core.camera.CaptureRequest;
+import com.iristick.smartglass.core.camera.CaptureResult;
 import com.iristick.smartglass.core.camera.CaptureSession;
 
 import org.webrtc.CameraVideoCapturer;
@@ -396,7 +400,7 @@ class IristickCapturer implements CameraVideoCapturer {
             CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             builder.addTarget(mImageReader.getSurface());
             setupCaptureRequest(builder);
-            mCaptureSession.capture(builder.build(), null, null);
+            mCaptureSession.capture(builder.build(), mCaptureListener, mCameraThreadHandler);
         }
     }
 
@@ -520,6 +524,7 @@ class IristickCapturer implements CameraVideoCapturer {
                 if (!dir.exists()) {
                     if (!dir.mkdirs()) {
                         Log.e(TAG, "Failed to create directory " + dir.getPath());
+                        Toast.makeText(mContext, R.string.call_toast_picture_fail, Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
@@ -529,10 +534,39 @@ class IristickCapturer implements CameraVideoCapturer {
                     Channels.newChannel(os).write(image.getPlanes()[0].getBuffer());
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to write capture to " + file.getPath(), e);
+                    Toast.makeText(mContext, R.string.call_toast_picture_fail, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 MediaScannerConnection.scanFile(mContext, new String[] { file.toString() }, null, null);
+                Toast.makeText(mContext, R.string.call_toast_picture_taken, Toast.LENGTH_SHORT).show();
             }
+        }
+    };
+
+    private final CaptureListener mCaptureListener = new CaptureListener() {
+        @Override
+        public void onCaptureStarted(CaptureSession session, CaptureRequest request, long timestamp, long frameNumber) {
+        }
+
+        @Override
+        public void onCaptureBufferLost(CaptureSession session, CaptureRequest request, Surface surface, long frameNumber) {
+        }
+
+        @Override
+        public void onCaptureCompleted(CaptureSession session, CaptureRequest request, CaptureResult result) {
+        }
+
+        @Override
+        public void onCaptureFailed(CaptureSession session, CaptureRequest request, CaptureFailure failure) {
+            Toast.makeText(mContext, R.string.call_toast_picture_fail, Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onCaptureSequenceCompleted(CaptureSession session, int sequenceId, long frameNumber) {
+        }
+
+        @Override
+        public void onCaptureSequenceAborted(CaptureSession session, int sequenceId) {
         }
     };
 }
