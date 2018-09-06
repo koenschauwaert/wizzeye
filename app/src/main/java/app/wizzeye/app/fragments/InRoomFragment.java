@@ -20,6 +20,7 @@
  */
 package app.wizzeye.app.fragments;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -67,6 +68,16 @@ public abstract class InRoomFragment extends BaseFragment {
         default:
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public boolean onBackPressed() {
+        new AlertDialog.Builder(getContext())
+            .setMessage(R.string.back_dialog_message)
+            .setPositiveButton(R.string.back_dialog_action_continue, (dialog, which) -> getActivity().finish())
+            .setNegativeButton(R.string.hangup, (dialog, which) -> mService.hangup())
+            .show();
+        return true;
     }
 
 }

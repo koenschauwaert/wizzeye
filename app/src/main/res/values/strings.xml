@@ -53,6 +53,8 @@
     <!-- Common labels -->
     <string name="hangup">End call</string>
     <string name="intent_chooser_open_with">Open with</string>
+    <string name="back_dialog_message">You are leaving Wizzeye.  Do you want to continue the call in the background?</string>
+    <string name="back_dialog_action_continue">Background</string>
 
     <!-- PermissionsFragment -->
     <string name="permissions_title">Permissions required</string>
