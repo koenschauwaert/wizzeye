@@ -201,10 +201,10 @@ let RTC = {
     });
   },
 
-  _createPC: function(ev) {
-    let pc = new RTCPeerConnection({iceServers: [
-      {urls: "stun:stun.l.google.com:19302"}
-    ]});
+  _createPC: function(ev, iceServers) {
+    if (iceServers === undefined)
+      iceServers = [{urls: "stun:stun.l.google.com:19302"}];
+    let pc = new RTCPeerConnection({iceServers: iceServers});
     pc.oniceconnectionstatechange = function (event) {
       console.log("ICE connection state: " + pc.iceConnectionState);
       switch(pc.iceConnectionState) {
@@ -236,7 +236,7 @@ let RTC = {
   },
 
   makeAnswer: function(ev, stream, offer) {
-    let pc = this._createPC(ev);
+    let pc = this._createPC(ev, offer.iceServers);
     return pc.setRemoteDescription(offer)
       .then(() => pc.addStream(stream))
       .then(() => pc.createAnswer())
