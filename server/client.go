@@ -31,6 +31,7 @@ import (
 type Client struct {
 	done      <-chan struct{}
 	sendqueue chan<- *Message
+	pingqueue chan<- struct{}
 }
 
 func HandleClient(ctx context.Context, conn *websocket.Conn) {
@@ -39,9 +40,12 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 	defer close(done)
 	eof := make(chan struct{})
 	outgoing := make(chan *Message, 5)
+	ping := make(chan struct{}, 1)
+	pinged := make(chan struct{}, 1)
 	c := &Client{
 		done:      done,
 		sendqueue: outgoing,
+		pingqueue: ping,
 	}
 	defer c.cleanup(ctx)
 	// Timeouts
@@ -53,6 +57,11 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 	conn.SetReadDeadline(time.Now().Add(readtimeout))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(readtimeout))
+		select {
+		case <-pinged:
+			router.Alive <- c
+		default:
+		}
 		return nil
 	})
 	// Reader goroutine
@@ -65,6 +74,12 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 				}
 				close(eof)
 				return
+			}
+			conn.SetReadDeadline(time.Now().Add(readtimeout))
+			select {
+			case <-pinged:
+				router.Alive <- c
+			default:
 			}
 			msg.Origin = c
 			LogConn(ctx, "<< ", msg)
@@ -82,6 +97,18 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 			if err := conn.WriteJSON(msg); err != nil {
 				log.Println("write error:", err)
 				return
+			}
+		case <-ping:
+			select {
+			case pinged <- struct{}{}:
+				LogConn(ctx, "Pinging")
+				conn.SetReadDeadline(time.Now().Add(pongtimeout)) // short timeout
+				conn.SetWriteDeadline(time.Now().Add(writetimeout))
+				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Println("write ping error:", err)
+					return
+				}
+			default:
 			}
 		case <-ticker.C:
 			conn.SetWriteDeadline(time.Now().Add(writetimeout))
@@ -112,6 +139,13 @@ func (c *Client) SendError(ctx context.Context, err error) {
 		msg.Text = err.Error()
 	}
 	c.Send(ctx, msg)
+}
+
+func (c *Client) Ping(ctx context.Context) {
+	select {
+	case c.pingqueue <- struct{}{}:
+	case <-c.done:
+	}
 }
 
 func (c *Client) cleanup(ctx context.Context) {

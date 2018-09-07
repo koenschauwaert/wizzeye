@@ -30,23 +30,29 @@ import (
 var roomNameRegexp = regexp.MustCompile(`^[-_a-z0-9]{5,64}$`)
 
 type Room struct {
-	Name  string
-	Seats map[Role]*Client
+	Name    string
+	Seats   map[Role]*Client
+	Waiting map[Role]*Client
 }
 
 type Router struct {
 	Incoming chan<- *Message
+	Alive    chan<- *Client
 
 	queue   chan *Message
+	alive   chan *Client
 	rooms   map[string]*Room
 	clients map[*Client]*Room
 }
 
 func ContextWithNewRouter(ctx context.Context) context.Context {
 	queue := make(chan *Message, 100)
+	alive := make(chan *Client, 100)
 	router := &Router{
 		Incoming: queue,
+		Alive:    alive,
 		queue:    queue,
+		alive:    alive,
 		rooms:    make(map[string]*Room),
 		clients:  make(map[*Client]*Room),
 	}
@@ -64,6 +70,8 @@ func (r *Router) run(ctx context.Context) {
 		select {
 		case msg := <-r.queue:
 			r.handle(ctx, msg)
+		case c := <-r.alive:
+			r.handleAlive(ctx, c)
 		}
 	}
 }
@@ -72,8 +80,9 @@ func (r *Router) getRoom(name string) *Room {
 	room := r.rooms[name]
 	if room == nil {
 		room = &Room{
-			Name:  name,
-			Seats: make(map[Role]*Client),
+			Name:    name,
+			Seats:   make(map[Role]*Client),
+			Waiting: make(map[Role]*Client),
 		}
 		r.rooms[name] = room
 	}
@@ -99,6 +108,24 @@ func (r *Router) handle(ctx context.Context, msg *Message) {
 	}
 }
 
+func (r *Router) handleAlive(ctx context.Context, c *Client) {
+	room := r.clients[c]
+	defer r.putRoom(room)
+
+	if room == nil {
+		return
+	}
+
+	for role, cc := range room.Seats {
+		if cc == c {
+			if waiter := room.Waiting[role]; waiter != nil {
+				waiter.SendError(ctx, ErrRoleTaken)
+				delete(room.Waiting, role)
+			}
+		}
+	}
+}
+
 func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {
 	switch role {
 	case GlassWearerRole, ObserverRole:
@@ -117,12 +144,16 @@ func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {
 	room := r.getRoom(name)
 	defer r.putRoom(room)
 
-	if room.Seats[role] != nil {
-		c.SendError(ctx, ErrRoleTaken)
+	r.clients[c] = room
+	if other := room.Seats[role]; other != nil {
+		if waiter := room.Waiting[role]; waiter != nil {
+			waiter.SendError(ctx, ErrRoleTaken)
+		}
+		room.Waiting[role] = c
+		other.Ping(ctx)
 		return
 	}
 	room.Seats[role] = c
-	r.clients[c] = room
 	for sr, sc := range room.Seats {
 		if sc != c {
 			sc.Send(ctx, &Message{
@@ -147,6 +178,12 @@ func (r *Router) leave(ctx context.Context, c *Client) {
 		return
 	}
 
+	for wr, wc := range room.Waiting {
+		if wc == c {
+			delete(room.Waiting, wr)
+		}
+	}
+
 	var role Role
 	for sr, sc := range room.Seats {
 		if sc == c {
@@ -154,8 +191,13 @@ func (r *Router) leave(ctx context.Context, c *Client) {
 			role = sr
 		}
 	}
-	for _, sc := range room.Seats {
-		sc.Send(ctx, &Message{Type: LeaveMsg, Room: room.Name, Role: role})
+	if role != "" {
+		for _, sc := range room.Seats {
+			sc.Send(ctx, &Message{Type: LeaveMsg, Room: room.Name, Role: role})
+		}
+		if waiter := room.Waiting[role]; waiter != nil {
+			r.join(ctx, waiter, room.Name, role)
+		}
 	}
 
 	delete(r.clients, c)
