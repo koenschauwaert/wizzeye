@@ -10,6 +10,7 @@
 
     <!-- Preferences -->
     <string name="pref_general_category">General</string>
+    <string name="pref_video_quality_title">Video quality</string>
     <string name="pref_server_title">Server</string>
     <string name="pref_server_default" translatable="false">https://wizzeye.app/</string>
     <string name="pref_turn_category">TURN Server (optional)</string>

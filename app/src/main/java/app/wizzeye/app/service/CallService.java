@@ -602,7 +602,16 @@ public class CallService extends Service {
         /* Set up video source */
         mVideoCap = new IristickCapturer(this, mHeadset, mCameraCallback);
         mVideoSrc = mFactory.createVideoSource(mVideoCap);
-        mVideoCap.startCapture(640, 480, 30);
+        switch (mPreferences.getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL")) {
+        case "LOW":
+            mVideoCap.startCapture(320, 240, 30);
+            break;
+        case "HD":
+            mVideoCap.startCapture(1280, 720, 30);
+            break;
+        default:
+            mVideoCap.startCapture(640, 480, 30);
+        }
         try {
             mVideoCap.setLaser(LaserMode.valueOf(mPreferences.getString(SettingsActivity.KEY_LASER_MODE, LaserMode.OFF.name())));
         } catch (IllegalArgumentException e) {

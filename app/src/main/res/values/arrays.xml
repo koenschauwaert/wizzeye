@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="pref_video_quality_values">
+        <item>LOW</item>
+        <item>NORMAL</item>
+        <item>HD</item>
+    </string-array>
+    <string-array name="pref_video_quality_labels">
+        <item>Low Bandwidth</item>
+        <item>Normal</item>
+        <item>High Definition</item>
+    </string-array>
+
     <string-array name="random_colors">
         <item>amber</item>
         <item>aquamarine</item>

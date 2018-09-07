@@ -3,6 +3,13 @@
 
     <PreferenceCategory android:title="@string/pref_general_category">
 
+        <ListPreference
+            android:key="video_quality"
+            android:title="@string/pref_video_quality_title"
+            android:entries="@array/pref_video_quality_labels"
+            android:entryValues="@array/pref_video_quality_values"
+            android:defaultValue="NORMAL" />
+
         <EditTextPreference
             android:key="server"
             android:title="@string/pref_server_title"

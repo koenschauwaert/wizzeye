@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -38,6 +39,7 @@ import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    public static final String KEY_VIDEO_QUALITY = "video_quality";
     public static final String KEY_SERVER = "server";
     public static final String KEY_TURN_HOSTNAME = "turn_hostname";
     public static final String KEY_TURN_USERNAME = "turn_username";
@@ -87,6 +89,7 @@ public class SettingsActivity extends AppCompatActivity {
             super.onResume();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
             prefs.registerOnSharedPreferenceChangeListener(this);
+            onSharedPreferenceChanged(prefs, KEY_VIDEO_QUALITY);
             onSharedPreferenceChanged(prefs, KEY_SERVER);
             onSharedPreferenceChanged(prefs, KEY_TURN_HOSTNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_USERNAME);
@@ -96,6 +99,9 @@ public class SettingsActivity extends AppCompatActivity {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Preference pref = findPreference(key);
             switch (key) {
+            case KEY_VIDEO_QUALITY:
+                pref.setSummary(((ListPreference) pref).getEntry());
+                break;
             case KEY_SERVER:
             case KEY_TURN_HOSTNAME:
             case KEY_TURN_USERNAME:
