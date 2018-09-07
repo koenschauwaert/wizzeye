@@ -68,9 +68,7 @@ func main() {
 		log.SetFlags(0)
 	}
 	LoadConfig()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = ContextWithNewRouter(ctx)
+	ctx := ContextWithNewRouter(context.Background())
 	http.HandleFunc("/ws", func(rw http.ResponseWriter, req *http.Request) {
 		websocketHandler(rw, req.WithContext(ctx))
 	})

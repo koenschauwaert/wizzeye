@@ -64,12 +64,7 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 			}
 			msg.Origin = c
 			LogConn(ctx, "<< ", msg)
-			select {
-			case router.Incoming <- msg:
-			case <-ctx.Done():
-				close(eof)
-				return
-			}
+			router.Incoming <- msg
 		}
 	}()
 	// Client handler
@@ -93,8 +88,6 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 			}
 		case <-eof:
 			return
-		case <-ctx.Done():
-			return
 		}
 	}
 }
@@ -103,7 +96,6 @@ func (c *Client) Send(ctx context.Context, msg *Message) {
 	select {
 	case c.sendqueue <- msg:
 	case <-c.done:
-	case <-ctx.Done():
 	}
 }
 
@@ -120,11 +112,7 @@ func (c *Client) SendError(ctx context.Context, err error) {
 }
 
 func (c *Client) cleanup(ctx context.Context) {
-	router := RouterFromContext(ctx)
-	select {
-	case router.Incoming <- &Message{Origin: c, Type: LeaveMsg}:
-	case <-ctx.Done():
-	}
+	RouterFromContext(ctx).Incoming <- &Message{Origin: c, Type: LeaveMsg}
 }
 
 // vim: set ts=4 sw=4 noet:

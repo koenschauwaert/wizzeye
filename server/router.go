@@ -64,8 +64,6 @@ func (r *Router) run(ctx context.Context) {
 		select {
 		case msg := <-r.queue:
 			r.handle(ctx, msg)
-		case <-ctx.Done():
-			return
 		}
 	}
 }
