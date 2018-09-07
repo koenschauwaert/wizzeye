@@ -21,6 +21,7 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
@@ -32,6 +33,7 @@ import android.widget.SeekBar;
 import org.webrtc.SurfaceViewRenderer;
 
 import app.wizzeye.app.R;
+import app.wizzeye.app.SettingsActivity;
 import app.wizzeye.app.service.LaserMode;
 
 public class CallFragment extends InRoomFragment {
@@ -50,7 +52,10 @@ public class CallFragment extends InRoomFragment {
         mVideo.setEnableHardwareScaler(true);
         mVideo.setOnClickListener(v -> mService.triggerAF());
 
+        String quality = PreferenceManager.getDefaultSharedPreferences(getContext())
+            .getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL");
         mZoom = view.findViewById(R.id.zoom);
+        mZoom.setMax(quality.equals("HD") ? 2 : 3);
         mZoom.setProgress(mService.getZoom());
         mZoom.setOnSeekBarChangeListener(mZoomListener);
         mZoom.setOnClickListener(v -> mService.triggerAF());
