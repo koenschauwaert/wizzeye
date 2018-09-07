@@ -44,11 +44,15 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 		sendqueue: outgoing,
 	}
 	defer c.cleanup(ctx)
+	// Timeouts
+	pinginterval := time.Duration(Cfg.PingInterval) * time.Second
+	pongtimeout := time.Duration(Cfg.PongTimeout) * time.Second
+	writetimeout := time.Duration(Cfg.WriteTimeout) * time.Second
+	readtimeout := pinginterval + pongtimeout
 	// Ping handler
-	pingtimeout := time.Duration(Cfg.PingTimeout) * time.Second
-	conn.SetReadDeadline(time.Now().Add(pingtimeout))
+	conn.SetReadDeadline(time.Now().Add(readtimeout))
 	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(pingtimeout))
+		conn.SetReadDeadline(time.Now().Add(readtimeout))
 		return nil
 	})
 	// Reader goroutine
@@ -68,9 +72,8 @@ func HandleClient(ctx context.Context, conn *websocket.Conn) {
 		}
 	}()
 	// Client handler
-	ticker := time.NewTicker(pingtimeout * 9 / 10)
+	ticker := time.NewTicker(pinginterval)
 	defer ticker.Stop()
-	writetimeout := time.Duration(Cfg.WriteTimeout) * time.Second
 	for {
 		select {
 		case msg := <-outgoing:

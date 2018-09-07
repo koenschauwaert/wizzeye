@@ -37,8 +37,9 @@ const (
 // Config is the top structure of the JSON configuration file.
 type Config struct {
 	Listen       string
+	PingInterval int
+	PongTimeout  int
 	WriteTimeout int
-	PingTimeout  int
 }
 
 // Global configuration variable
@@ -49,8 +50,9 @@ var configFile = flag.String("config", "config.toml", "configuration file")
 func LoadConfig() {
 	// Default values
 	Cfg.Listen = ":8080"
+	Cfg.PingInterval = 60 // seconds
+	Cfg.PongTimeout = 5   // seconds
 	Cfg.WriteTimeout = 10 // seconds
-	Cfg.PingTimeout = 60  // seconds
 	// Load configuration file
 	if _, err := toml.DecodeFile(*configFile, &Cfg); err != nil {
 		log.Print(*configFile, ": ", err)
