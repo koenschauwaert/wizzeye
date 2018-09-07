@@ -25,10 +25,14 @@ import android.util.Log;
 
 import com.koushikdutta.async.http.WebSocket;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.IceCandidate;
+import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
+
+import java.util.List;
 
 class SignalingProtocol {
 
@@ -136,13 +140,29 @@ class SignalingProtocol {
         }
     }
 
-    void offer(SessionDescription offer) {
+    void offer(SessionDescription offer, List<PeerConnection.IceServer> iceServers) {
         try {
             JSONObject msg = new JSONObject();
             msg.put("type", "broadcast");
             JSONObject data = new JSONObject();
             data.put("type", "offer");
             data.put("sdp", offer.description);
+            if (iceServers != null) {
+                JSONArray array = new JSONArray();
+                for (PeerConnection.IceServer server : iceServers) {
+                    JSONObject obj = new JSONObject();
+                    JSONArray urls = new JSONArray();
+                    for (String url : server.urls)
+                        urls.put(url);
+                    obj.put("urls", urls);
+                    if (!server.username.isEmpty())
+                        obj.put("username", server.username);
+                    if (!server.password.isEmpty())
+                        obj.put("credential", server.password);
+                    array.put(obj);
+                }
+                data.put("iceServers", array);
+            }
             msg.put("data", data);
             send(msg);
         } catch (JSONException e) {

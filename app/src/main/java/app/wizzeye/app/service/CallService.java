@@ -723,7 +723,7 @@ public class CallService extends Service {
                 if (mPC != null) {
                     Log.d(TAG, "Offer created");
                     mPC.setLocalDescription(mSdpObserver, sessionDescription);
-                    mSignal.offer(sessionDescription);
+                    mSignal.offer(sessionDescription, getIceServers());
                 }
             });
         }
