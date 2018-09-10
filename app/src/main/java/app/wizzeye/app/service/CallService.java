@@ -450,7 +450,7 @@ public class CallService extends Service {
                     // Connect to server through websocket
                     mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
                         mUri.buildUpon().path("/ws").build().toString(),
-                        "v1", mSocketConnectCallback);
+                        SignalingProtocol.VERSION, mSocketConnectCallback);
 
                     setState(CallState.CONNECTING_TO_SERVER);
                 });

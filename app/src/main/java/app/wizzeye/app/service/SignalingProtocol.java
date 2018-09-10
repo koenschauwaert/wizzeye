@@ -50,6 +50,8 @@ class SignalingProtocol {
         void onIceCandidate(IceCandidate candidate);
     }
 
+    public static final String VERSION = "v1";
+
     private static final String TAG = "SignalingProtocol";
 
     private final WebSocket mSocket;
