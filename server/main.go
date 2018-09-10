@@ -34,13 +34,21 @@ import (
 var webroot = flag.String("webroot", "webroot", "web root directory")
 
 var upgrader = websocket.Upgrader{
-	Subprotocols: []string{SignalingProtocol},
-	CheckOrigin:  func(r *http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 func LogConn(ctx context.Context, v ...interface{}) {
 	v = append([]interface{}{ctx.Value(RemoteAddrKey), ": "}, v...)
 	log.Print(v...)
+}
+
+func checkSubprotocol(r *http.Request) bool {
+	for _, protocol := range websocket.Subprotocols(r) {
+		if protocol == SignalingProtocol {
+			return true
+		}
+	}
+	return false
 }
 
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +57,14 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		remote = r.RemoteAddr
 	}
 	ctx := context.WithValue(r.Context(), RemoteAddrKey, remote)
-	conn, err := upgrader.Upgrade(w, r, nil)
+	if !checkSubprotocol(r) {
+		LogConn(ctx, "Subprotocol mismatch")
+		http.Error(w, "Subprotocol mismatch", http.StatusBadRequest)
+		return
+	}
+	conn, err := upgrader.Upgrade(w, r, http.Header{
+		"Sec-WebSocket-Protocol": []string{SignalingProtocol},
+	})
 	if err != nil {
 		log.Println(err)
 		return
