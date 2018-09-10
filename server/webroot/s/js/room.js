@@ -156,7 +156,8 @@ function WizzeyeSocket() {
   this.onopen = null;
   this.onmessage = null;
   this.socket = new WebSocket(location.protocol.replace('http', 'ws') + '//' +
-                              location.host + '/ws', 'v1');
+                              location.host + '/ws',
+                              'v1.signaling.wizzeye.app');
   this.socket.onerror = (event => {
     if (this.onerror != null)
       this.onerror(event);
@@ -176,10 +177,6 @@ function WizzeyeSocket() {
 WizzeyeSocket.prototype.send = function(msg) {
   console.log("Sending", msg);
   this.socket.send(JSON.stringify(msg));
-}
-
-WizzeyeSocket.prototype.sendData = function(msg) {
-  this.send({type: 'broadcast', data: msg})
 }
 
 
@@ -235,8 +232,8 @@ let RTC = {
       .then(() => pc.localDescription);
   },
 
-  makeAnswer: function(ev, stream, offer) {
-    let pc = this._createPC(ev, offer.iceServers);
+  makeAnswer: function(ev, stream, offer, iceServers) {
+    let pc = this._createPC(ev, iceServers);
     return pc.setRemoteDescription(offer)
       .then(() => pc.addStream(stream))
       .then(() => pc.createAnswer())
@@ -294,7 +291,7 @@ let rtcEvents = {
   },
 
   onIceCandidate: function(candidate) {
-    ws.sendData({type: 'ice-candidate', candidate: candidate});
+    ws.send({type: 'ice-candidate', payload: candidate});
   }
 };
 
@@ -323,7 +320,7 @@ ws.onmessage = function(msg) {
       setState(State.ESTABLISHING);
       if (role == 'glass-wearer') {
         RTC.makeOffer(rtcEvents, stream)
-          .then(offer => ws.sendData(offer))
+          .then(offer => ws.send({type: 'offer', payload: offer}))
           .catch(e => setState(State.ERROR, Err.WEBRTC, e));
       }
     }).catch(e => setState(State.ERROR, Err.MEDIA_DENIED, e));
@@ -334,41 +331,34 @@ ws.onmessage = function(msg) {
       setState(State.WAITING_FOR_JOIN);
     }
     break;
-  case 'broadcast':
-    msg = msg.data;
-    switch (msg.type) {
-    case 'offer':
-      if (state < State.GET_USER_MEDIA)
-        break;
-      RTC.closePC();
-      if (state > State.ESTABLISHING)
-        setState(State.ESTABLISHING);
-      requestLocalMedia()
-        .then(stream => {
-                if (state >= State.GET_USER_MEDIA)
-                  setState(State.ESTABLISHING);
-                return RTC.makeAnswer(rtcEvents, stream, msg)
-              }, e => setState(State.ERROR, Err.MEDIA_DENIED, e))
-        .then(answer => {
-          if (state >= State.ESTABLISHING) {
-            ws.sendData(answer);
-          }
-        }).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+  case 'offer':
+    if (state < State.GET_USER_MEDIA)
       break;
-    case 'answer':
-      if (state != State.ESTABLISHING)
-        break;
-      RTC.setAnswer(msg).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+    RTC.closePC();
+    if (state > State.ESTABLISHING)
+      setState(State.ESTABLISHING);
+    requestLocalMedia()
+      .then(stream => {
+              if (state >= State.GET_USER_MEDIA)
+                setState(State.ESTABLISHING);
+              return RTC.makeAnswer(rtcEvents, stream, msg.payload, msg.iceServers)
+            }, e => setState(State.ERROR, Err.MEDIA_DENIED, e))
+      .then(answer => {
+        if (state >= State.ESTABLISHING) {
+          ws.send({type: 'answer', payload: answer});
+        }
+      }).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+    break;
+  case 'answer':
+    if (state != State.ESTABLISHING)
       break;
-    case 'ice-candidate':
-      if (state < State.GET_USER_MEDIA)
-        break;
-      RTC.addIceCandidate(msg.candidate)
-        .catch(e => setState(State.ERROR, Err.WEBRTC, e));
+    RTC.setAnswer(msg.payload).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+    break;
+  case 'ice-candidate':
+    if (state < State.GET_USER_MEDIA)
       break;
-    default:
-      console.warn("Unknown data message type " + msg.type);
-    }
+    RTC.addIceCandidate(msg.payload)
+      .catch(e => setState(State.ERROR, Err.WEBRTC, e));
     break;
   default:
     console.warn("Unknown message type " + msg.type);
