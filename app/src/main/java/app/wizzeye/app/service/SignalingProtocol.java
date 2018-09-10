@@ -50,7 +50,7 @@ class SignalingProtocol {
         void onIceCandidate(IceCandidate candidate);
     }
 
-    public static final String VERSION = "v1";
+    public static final String VERSION = "v1.signaling.wizzeye.app";
 
     private static final String TAG = "SignalingProtocol";
 
@@ -85,25 +85,17 @@ class SignalingProtocol {
                 case "leave":
                     mListener.onLeave(msg.getString("room"), msg.getString("role"));
                     break;
-                case "broadcast":
-                    msg = msg.getJSONObject("data");
-                    type = msg.getString("type");
-                    switch (type) {
-                    case "answer":
-                        mListener.onAnswer(new SessionDescription(SessionDescription.Type.ANSWER,
-                            msg.getString("sdp")));
-                        break;
-                    case "ice-candidate":
-                        JSONObject c = msg.getJSONObject("candidate");
-                        mListener.onIceCandidate(new IceCandidate(
-                            c.getString("sdpMid"),
-                            c.getInt("sdpMLineIndex"),
-                            c.getString("candidate")
-                        ));
-                        break;
-                    default:
-                        Log.w(TAG, "Got unknown broadcast of type " + type);
-                    }
+                case "answer":
+                    mListener.onAnswer(new SessionDescription(SessionDescription.Type.ANSWER,
+                        msg.getJSONObject("payload").getString("sdp")));
+                    break;
+                case "ice-candidate":
+                    JSONObject c = msg.getJSONObject("payload");
+                    mListener.onIceCandidate(new IceCandidate(
+                        c.getString("sdpMid"),
+                        c.getInt("sdpMLineIndex"),
+                        c.getString("candidate")
+                    ));
                     break;
                 default:
                     Log.w(TAG, "Got unknown message of type " + type);
@@ -145,10 +137,11 @@ class SignalingProtocol {
     void offer(SessionDescription offer, List<PeerConnection.IceServer> iceServers) {
         try {
             JSONObject msg = new JSONObject();
-            msg.put("type", "broadcast");
-            JSONObject data = new JSONObject();
-            data.put("type", "offer");
-            data.put("sdp", offer.description);
+            msg.put("type", "offer");
+            JSONObject payload = new JSONObject();
+            payload.put("type", "offer");
+            payload.put("sdp", offer.description);
+            msg.put("payload", payload);
             if (iceServers != null) {
                 JSONArray array = new JSONArray();
                 for (PeerConnection.IceServer server : iceServers) {
@@ -163,9 +156,8 @@ class SignalingProtocol {
                         obj.put("credential", server.password);
                     array.put(obj);
                 }
-                data.put("iceServers", array);
+                msg.put("iceServers", array);
             }
-            msg.put("data", data);
             send(msg);
         } catch (JSONException e) {
             Log.e(TAG, "Misformatted JSON", e);
@@ -175,15 +167,12 @@ class SignalingProtocol {
     void iceCandidate(IceCandidate candidate) {
         try {
             JSONObject msg = new JSONObject();
-            msg.put("type", "broadcast");
-            JSONObject data = new JSONObject();
-            data.put("type", "ice-candidate");
-            JSONObject c = new JSONObject();
-            c.put("candidate", candidate.sdp);
-            c.put("sdpMid", candidate.sdpMid);
-            c.put("sdpMLineIndex", candidate.sdpMLineIndex);
-            data.put("candidate", c);
-            msg.put("data", data);
+            msg.put("type", "ice-candidate");
+            JSONObject payload = new JSONObject();
+            payload.put("candidate", candidate.sdp);
+            payload.put("sdpMid", candidate.sdpMid);
+            payload.put("sdpMLineIndex", candidate.sdpMLineIndex);
+            msg.put("payload", payload);
             send(msg);
         } catch (JSONException e) {
             Log.e(TAG, "Misformatted JSON", e);
