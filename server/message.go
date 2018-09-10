@@ -28,6 +28,8 @@ import (
 	"fmt"
 )
 
+const SignalingProtocol = "v1.signaling.wizzeye.app"
+
 type MsgType string
 
 const (
@@ -43,9 +45,17 @@ const (
 	// Fields: [room], [role].
 	LeaveMsg MsgType = "leave"
 
-	// Broadcast data to all participants in the current room.
-	// Fields: data.
-	BroadcastMsg MsgType = "broadcast"
+	// SDP offer to forward to other participant.
+	// Fields: payload, [iceServers].
+	OfferMsg MsgType = "offer"
+
+	// SDP answer to forward to other participant.
+	// Fields: payload.
+	AnswerMsg MsgType = "answer"
+
+	// ICE candidate to forward to other participant.
+	// Fields payload.
+	IceCandidateMsg MsgType = "ice-candidate"
 )
 
 type Error struct {
@@ -75,13 +85,14 @@ const (
 // Message is the top structure of JSON messages transfered over the WebSocket
 // channel.
 type Message struct {
-	Origin *Client         `json:"-"`
-	Type   MsgType         `json:"type"`
-	Code   int             `json:"code,omitempty"`
-	Text   string          `json:"text,omitempty"`
-	Room   string          `json:"room,omitempty"`
-	Role   Role            `json:"role,omitempty"`
-	Data   json.RawMessage `json:"data,omitempty"`
+	Origin     *Client         `json:"-"`
+	Type       MsgType         `json:"type"`
+	Code       int             `json:"code,omitempty"`
+	Text       string          `json:"text,omitempty"`
+	Room       string          `json:"room,omitempty"`
+	Role       Role            `json:"role,omitempty"`
+	Payload    json.RawMessage `json:"payload,omitempty"`
+	IceServers json.RawMessage `json:"iceServers,omitempty"`
 }
 
 func (msg *Message) String() string {
@@ -99,9 +110,6 @@ func (msg *Message) String() string {
 	}
 	if msg.Role != "" {
 		fmt.Fprint(w, ", role=\"", msg.Role, "\"")
-	}
-	if msg.Data != nil {
-		fmt.Fprint(w, ", data=", string(msg.Data[:64]), "...")
 	}
 	fmt.Fprint(w, "}")
 	w.Flush()

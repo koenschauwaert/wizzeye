@@ -34,7 +34,7 @@ import (
 var webroot = flag.String("webroot", "webroot", "web root directory")
 
 var upgrader = websocket.Upgrader{
-	Subprotocols: []string{"v1"},
+	Subprotocols: []string{SignalingProtocol},
 	CheckOrigin:  func(r *http.Request) bool { return true },
 }
 

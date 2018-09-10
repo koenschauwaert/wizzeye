@@ -101,8 +101,8 @@ func (r *Router) handle(ctx context.Context, msg *Message) {
 		r.join(ctx, msg.Origin, msg.Room, msg.Role)
 	case LeaveMsg:
 		r.leave(ctx, msg.Origin)
-	case BroadcastMsg:
-		r.broadcast(ctx, msg.Origin, msg)
+	case OfferMsg, AnswerMsg, IceCandidateMsg:
+		r.forward(ctx, msg.Origin, msg)
 	default:
 		msg.Origin.SendError(ctx, ErrBadMessage)
 	}
@@ -203,7 +203,7 @@ func (r *Router) leave(ctx context.Context, c *Client) {
 	delete(r.clients, c)
 }
 
-func (r *Router) broadcast(ctx context.Context, c *Client, msg *Message) {
+func (r *Router) forward(ctx context.Context, c *Client, msg *Message) {
 	room := r.clients[c]
 	defer r.putRoom(room)
 
