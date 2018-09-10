@@ -129,18 +129,6 @@ func (c *Client) Send(ctx context.Context, msg *Message) {
 	}
 }
 
-func (c *Client) SendError(ctx context.Context, err error) {
-	msg := &Message{Type: ErrorMsg}
-	if e, ok := err.(*Error); ok {
-		msg.Code = e.Code
-		msg.Text = e.Text
-	} else {
-		msg.Code = ErrUnknown.Code
-		msg.Text = err.Error()
-	}
-	c.Send(ctx, msg)
-}
-
 func (c *Client) Ping(ctx context.Context) {
 	select {
 	case c.pingqueue <- struct{}{}:

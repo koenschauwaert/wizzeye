@@ -116,4 +116,16 @@ func (msg *Message) String() string {
 	return buf.String()
 }
 
+func MakeErrorMsg(err error) *Message {
+	msg := &Message{Type: ErrorMsg}
+	if e, ok := err.(*Error); ok {
+		msg.Code = e.Code
+		msg.Text = e.Text
+	} else {
+		msg.Code = ErrUnknown.Code
+		msg.Text = err.Error()
+	}
+	return msg
+}
+
 // vim: set ts=4 sw=4 noet:

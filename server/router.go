@@ -104,7 +104,7 @@ func (r *Router) handle(ctx context.Context, msg *Message) {
 	case OfferMsg, AnswerMsg, IceCandidateMsg:
 		r.forward(ctx, msg.Origin, msg)
 	default:
-		msg.Origin.SendError(ctx, ErrBadMessage)
+		msg.Origin.Send(ctx, MakeErrorMsg(ErrBadMessage))
 	}
 }
 
@@ -119,7 +119,7 @@ func (r *Router) handleAlive(ctx context.Context, c *Client) {
 	for role, cc := range room.Seats {
 		if cc == c {
 			if waiter := room.Waiting[role]; waiter != nil {
-				waiter.SendError(ctx, ErrRoleTaken)
+				waiter.Send(ctx, MakeErrorMsg(ErrRoleTaken))
 				delete(room.Waiting, role)
 			}
 		}
@@ -130,12 +130,12 @@ func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {
 	switch role {
 	case GlassWearerRole, ObserverRole:
 	default:
-		c.SendError(ctx, ErrBadMessage)
+		c.Send(ctx, MakeErrorMsg(ErrBadMessage))
 		return
 	}
 	name = strings.ToLower(name)
 	if !roomNameRegexp.MatchString(name) {
-		c.SendError(ctx, ErrBadRoom)
+		c.Send(ctx, MakeErrorMsg(ErrBadRoom))
 		return
 	}
 
@@ -147,7 +147,7 @@ func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {
 	r.clients[c] = room
 	if other := room.Seats[role]; other != nil {
 		if waiter := room.Waiting[role]; waiter != nil {
-			waiter.SendError(ctx, ErrRoleTaken)
+			waiter.Send(ctx, MakeErrorMsg(ErrRoleTaken))
 		}
 		room.Waiting[role] = c
 		other.Ping(ctx)
@@ -214,7 +214,7 @@ func (r *Router) forward(ctx context.Context, c *Client, msg *Message) {
 			}
 		}
 	} else {
-		c.SendError(ctx, ErrNoRoom)
+		c.Send(ctx, MakeErrorMsg(ErrNoRoom))
 	}
 }
 
