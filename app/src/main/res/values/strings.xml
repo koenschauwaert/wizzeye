@@ -80,6 +80,7 @@
     <string name="call_action_take_picture">Take picture</string>
     <string name="call_toast_picture_taken">Picture taken</string>
     <string name="call_toast_picture_fail">Oops, the picture could not be taken</string>
+    <string name="call_toast_focus_forbidden">Please zoom out to refocus</string>
 
     <!-- LogsActivity -->
     <string name="logs_title">Logs</string>

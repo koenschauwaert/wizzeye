@@ -50,7 +50,7 @@ public class CallFragment extends InRoomFragment {
         mVideo = view.findViewById(R.id.video);
         mVideo.init(mService.getEglBase().getEglBaseContext(), null);
         mVideo.setEnableHardwareScaler(true);
-        mVideo.setOnClickListener(v -> mService.triggerAF());
+        mVideo.setOnClickListener(v -> refocus());
 
         String quality = PreferenceManager.getDefaultSharedPreferences(getContext())
             .getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL");
@@ -58,7 +58,7 @@ public class CallFragment extends InRoomFragment {
         mZoom.setMax(quality.equals("HD") ? 2 : 3);
         mZoom.setProgress(mService.getZoom());
         mZoom.setOnSeekBarChangeListener(mZoomListener);
-        mZoom.setOnClickListener(v -> mService.triggerAF());
+        mZoom.setOnClickListener(v -> refocus());
 
         mDrawerLayout = view.findViewById(R.id.drawer_layout);
         mDrawerLayout.addDrawerListener(mDrawerListener);
@@ -94,6 +94,13 @@ public class CallFragment extends InRoomFragment {
             return true;
         }
         return super.onBackPressed();
+    }
+
+    private void refocus() {
+        if (mService.getZoom() >= mZoom.getMax())
+            Toast.makeText(getContext(), R.string.call_toast_focus_forbidden, Toast.LENGTH_SHORT).show();
+        else
+            mService.triggerAF();
     }
 
     private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
