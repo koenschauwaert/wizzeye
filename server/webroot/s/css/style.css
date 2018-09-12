@@ -142,18 +142,6 @@ video {
   font-size: 1rem;
 }
 
-ul.linksbox {
-  list-style: none;
-  margin-top: 3rem;
-  padding: 0;
-}
-
-ul.linksbox li {
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-}
-
 @media print {
   body {
     color: black;
