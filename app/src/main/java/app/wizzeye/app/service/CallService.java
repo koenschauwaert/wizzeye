@@ -613,7 +613,7 @@ public class CallService extends Service {
             mVideoCap.startCapture(640, 480, 30);
         }
         try {
-            mVideoCap.setLaser(LaserMode.valueOf(mPreferences.getString(SettingsActivity.KEY_LASER_MODE, LaserMode.OFF.name())));
+            mVideoCap.setLaser(LaserMode.valueOf(mPreferences.getString(SettingsActivity.KEY_LASER_MODE, LaserMode.AUTO.name())));
         } catch (IllegalArgumentException e) {
             // ignore bad preference value
         }
