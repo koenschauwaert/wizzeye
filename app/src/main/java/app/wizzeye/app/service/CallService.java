@@ -50,6 +50,8 @@ import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DataChannel;
+import org.webrtc.DefaultVideoDecoderFactory;
+import org.webrtc.DefaultVideoEncoderFactory;
 import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
@@ -59,6 +61,7 @@ import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtpReceiver;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
+import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoSink;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
@@ -108,6 +111,7 @@ public class CallService extends Service {
     private SignalingProtocol mSignal;
     private Headset mHeadset;
     private PeerConnectionFactory mFactory;
+    private SurfaceTextureHelper mSurfaceTextureHelper;
     private IristickCapturer mVideoCap;
     private VideoSource mVideoSrc;
     private VideoTrack mVideoTrack;
@@ -294,9 +298,9 @@ public class CallService extends Service {
         mHandler = new Handler();
 
         mEglBase = EglBase.create();
-        PeerConnectionFactory.InitializationOptions.Builder builder = PeerConnectionFactory.InitializationOptions.builder(this);
-        builder.setEnableVideoHwAcceleration(true);
-        PeerConnectionFactory.initialize(builder.createInitializationOptions());
+        PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
+            .builder(this)
+            .createInitializationOptions());
         WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -342,13 +346,17 @@ public class CallService extends Service {
             mVideoTrack.dispose();
             mVideoTrack = null;
         }
+        if (mVideoCap != null) {
+            mVideoCap.dispose();
+            mVideoCap = null;
+        }
         if (mVideoSrc != null) {
             mVideoSrc.dispose();
             mVideoSrc = null;
         }
-        if (mVideoCap != null) {
-            mVideoCap.dispose();
-            mVideoCap = null;
+        if (mSurfaceTextureHelper != null) {
+            mSurfaceTextureHelper.dispose();
+            mSurfaceTextureHelper = null;
         }
         if (mFactory != null) {
             mFactory.dispose();
@@ -596,12 +604,17 @@ public class CallService extends Service {
         PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
         options.networkIgnoreMask = 16; // ADAPTER_TYPE_LOOPBACK
         options.disableNetworkMonitor = true;
-        mFactory = PeerConnectionFactory.builder().setOptions(options).createPeerConnectionFactory();
-        mFactory.setVideoHwAccelerationOptions(mEglBase.getEglBaseContext(), mEglBase.getEglBaseContext());
+        mFactory = PeerConnectionFactory.builder()
+            .setOptions(options)
+            .setVideoEncoderFactory(new DefaultVideoEncoderFactory(mEglBase.getEglBaseContext(), false, false))
+            .setVideoDecoderFactory(new DefaultVideoDecoderFactory(mEglBase.getEglBaseContext()))
+            .createPeerConnectionFactory();
 
         /* Set up video source */
-        mVideoCap = new IristickCapturer(this, mHeadset, mCameraCallback);
-        mVideoSrc = mFactory.createVideoSource(mVideoCap);
+        mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mEglBase.getEglBaseContext());
+        mVideoSrc = mFactory.createVideoSource(false);
+        mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
+        mVideoCap.initialize(mSurfaceTextureHelper, this, mVideoSrc.getCapturerObserver());
         switch (mPreferences.getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL")) {
         case "LOW":
             mVideoCap.startCapture(320, 240, 30);

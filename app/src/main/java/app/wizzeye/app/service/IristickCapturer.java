@@ -43,9 +43,10 @@ import com.iristick.smartglass.core.camera.CaptureResult;
 import com.iristick.smartglass.core.camera.CaptureSession;
 
 import org.webrtc.CameraVideoCapturer;
-import org.webrtc.RendererCommon;
+import org.webrtc.CapturerObserver;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoFrame;
+import org.webrtc.VideoSink;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -68,14 +69,13 @@ class IristickCapturer implements CameraVideoCapturer {
     private static final DateFormat PICTURE_FILENAME = new SimpleDateFormat("'IMG_'yyyyMMdd_HHmmssSSS'.jpg'", Locale.US);
 
     /* Initialized by constructor */
-    private final Context mContext;
     private final Headset mHeadset;
     private final CameraEventsHandler mEvents;
     private final String[] mCameraNames;
 
     /* Initialized by initialize() */
     private SurfaceTextureHelper mSurfaceHelper;
-    private Context mAppContext;
+    private Context mContext;
     private CapturerObserver mObserver;
     private Handler mCameraThreadHandler;
     private ImageReader mImageReader;
@@ -97,7 +97,7 @@ class IristickCapturer implements CameraVideoCapturer {
     private boolean mTorch = false;
     private LaserMode mLaser = LaserMode.OFF;
 
-    IristickCapturer(Context context, Headset headset, CameraEventsHandler eventsHandler) {
+    IristickCapturer(Headset headset, CameraEventsHandler eventsHandler) {
         if (eventsHandler == null) {
             eventsHandler = new CameraEventsHandler() {
                 @Override
@@ -114,17 +114,15 @@ class IristickCapturer implements CameraVideoCapturer {
                 public void onCameraClosed() {}
             };
         }
-        mContext = context;
         mHeadset = headset;
         mEvents = eventsHandler;
         mCameraNames = headset.getCameraIdList();
     }
 
     @Override
-    public void initialize(SurfaceTextureHelper surfaceTextureHelper, Context applicationContext,
-                           CapturerObserver capturerObserver) {
+    public void initialize(SurfaceTextureHelper surfaceTextureHelper, Context context, CapturerObserver capturerObserver) {
         mSurfaceHelper = surfaceTextureHelper;
-        mAppContext = applicationContext;
+        mContext = context;
         mObserver = capturerObserver;
         mCameraThreadHandler = surfaceTextureHelper.getHandler();
 
@@ -140,7 +138,7 @@ class IristickCapturer implements CameraVideoCapturer {
     public void startCapture(int width, int height, int framerate) {
         Log.d(TAG, "startCapture: " + width + "x" + height + "@" + framerate);
 
-        if (mAppContext == null)
+        if (mContext == null)
             throw new IllegalStateException("CameraCapturer must be initialized before calling startCapture");
 
         synchronized (mStateLock) {
@@ -412,9 +410,8 @@ class IristickCapturer implements CameraVideoCapturer {
             synchronized (mStateLock) {
                 mCamera = device;
 
-                final SurfaceTexture surfaceTexture = mSurfaceHelper.getSurfaceTexture();
-                surfaceTexture.setDefaultBufferSize(mWidth, mHeight);
-                mSurface = new Surface(surfaceTexture);
+                mSurfaceHelper.setTextureSize(mWidth, mHeight);
+                mSurface = new Surface(mSurfaceHelper.getSurfaceTexture());
 
                 List<Surface> outputs = new ArrayList<>();
                 outputs.add(mSurface);
@@ -454,7 +451,7 @@ class IristickCapturer implements CameraVideoCapturer {
         public void onConfigured(CaptureSession session) {
             checkIsOnCameraThread();
             synchronized (mStateLock) {
-                mSurfaceHelper.startListening(mFrameAvailableListener);
+                mSurfaceHelper.startListening(mSink);
                 mObserver.onCapturerStarted(true);
                 mSessionOpening = false;
                 mCaptureSession = session;
@@ -486,24 +483,18 @@ class IristickCapturer implements CameraVideoCapturer {
         public void onReady(CaptureSession session) {}
     };
 
-    private final SurfaceTextureHelper.OnTextureFrameAvailableListener mFrameAvailableListener = new SurfaceTextureHelper.OnTextureFrameAvailableListener() {
+    private final VideoSink mSink = new VideoSink() {
         @Override
-        public void onTextureFrameAvailable(int oesTextureId, float[] transformMatrix, long timestampNs) {
+        public void onFrame(VideoFrame frame) {
             checkIsOnCameraThread();
             synchronized (mStateLock) {
-                if (mCaptureSession == null) {
-                    mSurfaceHelper.returnTextureFrame();
-                } else {
-                    if (!mFirstFrameObserved) {
-                        mEvents.onFirstFrameAvailable();
-                        mFirstFrameObserved = true;
-                    }
-                    VideoFrame.Buffer buffer = mSurfaceHelper.createTextureBuffer(mWidth, mHeight,
-                            RendererCommon.convertMatrixToAndroidGraphicsMatrix(transformMatrix));
-                    final VideoFrame frame = new VideoFrame(buffer, 0, timestampNs);
-                    mObserver.onFrameCaptured(frame);
-                    frame.release();
+                if (mCaptureSession == null)
+                    return;
+                if (!mFirstFrameObserved) {
+                    mEvents.onFirstFrameAvailable();
+                    mFirstFrameObserved = true;
                 }
+                mObserver.onFrameCaptured(frame);
             }
         }
     };
