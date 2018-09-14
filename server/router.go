@@ -101,7 +101,7 @@ func (r *Router) handle(ctx context.Context, msg *Message) {
 		r.join(ctx, msg.Origin, msg.Room, msg.Role)
 	case LeaveMsg:
 		r.leave(ctx, msg.Origin)
-	case OfferMsg, AnswerMsg, IceCandidateMsg:
+	case OfferMsg, AnswerMsg, IceCandidateMsg, ResetMsg:
 		r.forward(ctx, msg.Origin, msg)
 	default:
 		msg.Origin.Send(ctx, MakeErrorMsg(ErrBadMessage))

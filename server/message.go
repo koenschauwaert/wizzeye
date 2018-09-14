@@ -54,8 +54,11 @@ const (
 	AnswerMsg MsgType = "answer"
 
 	// ICE candidate to forward to other participant.
-	// Fields payload.
+	// Fields: payload.
 	IceCandidateMsg MsgType = "ice-candidate"
+
+	// Reset the WebRTC state, as if everyone has just joined.
+	ResetMsg MsgType = "reset"
 )
 
 type Error struct {
