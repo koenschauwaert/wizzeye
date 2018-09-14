@@ -297,6 +297,7 @@ let rtcEvents = {
       break;
     case State.CALL_IN_PROGRESS:
       setState(State.ESTABLISHING);
+      ws.send({type: 'reset'});
       break;
     }
   },
@@ -305,6 +306,19 @@ let rtcEvents = {
     ws.send({type: 'ice-candidate', payload: candidate});
   }
 };
+
+function establish() {
+  requestLocalMedia().then(stream => {
+    if (state != State.GET_USER_MEDIA)
+      return;
+    setState(State.ESTABLISHING);
+    if (role == 'glass-wearer') {
+      RTC.makeOffer(rtcEvents, stream)
+        .then(offer => ws.send({type: 'offer', payload: offer}))
+        .catch(e => die(Err.WEBRTC, e));
+    }
+  }).catch(e => die(Err.MEDIA_DENIED, e));
+}
 
 ws.onmessage = function(msg) {
   switch (msg.type) {
@@ -324,21 +338,19 @@ ws.onmessage = function(msg) {
     if (state != State.WAITING_FOR_JOIN)
       break;
     setState(State.GET_USER_MEDIA);
-    requestLocalMedia().then(stream => {
-      if (state != State.GET_USER_MEDIA)
-        return;
-      setState(State.ESTABLISHING);
-      if (role == 'glass-wearer') {
-        RTC.makeOffer(rtcEvents, stream)
-          .then(offer => ws.send({type: 'offer', payload: offer}))
-          .catch(e => die(Err.WEBRTC, e));
-      }
-    }).catch(e => die(Err.MEDIA_DENIED, e));
+    establish();
     break;
   case 'leave':
     if (state > State.WAITING_FOR_JOIN) {
       RTC.closePC();
       setState(State.WAITING_FOR_JOIN);
+    }
+    break;
+  case 'reset':
+    if (state >= State.ESTABLISHING) {
+      RTC.closePC();
+      setState(State.ESTABLISHING);
+      establish();
     }
     break;
   case 'offer':
