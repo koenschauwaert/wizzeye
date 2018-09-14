@@ -174,6 +174,10 @@ function WizzeyeSocket() {
   });
 }
 
+WizzeyeSocket.prototype.close = function() {
+  this.socket.close();
+}
+
 WizzeyeSocket.prototype.send = function(msg) {
   console.log("Sending", msg);
   this.socket.send(JSON.stringify(msg));
@@ -261,8 +265,15 @@ setState(State.WEBSOCKET_CONNECT);
 
 let ws = new WizzeyeSocket();
 
+function die(error, message) {
+  RTC.closePC();
+  ws.send({type: 'leave'});
+  ws.close();
+  setState(State.ERROR, error, message);
+}
+
 ws.onerror = function(e) {
-  setState(State.ERROR, Err.WEBSOCKET_ERROR, e);
+  die(Err.WEBSOCKET_ERROR, e);
 }
 
 ws.onopen = function() {
@@ -282,7 +293,7 @@ let rtcEvents = {
     RTC.closePC();
     switch (state) {
     case State.ESTABLISHING:
-      setState(State.ERROR, Err.ICE);
+      die(Err.ICE);
       break;
     case State.CALL_IN_PROGRESS:
       setState(State.ESTABLISHING);
@@ -298,16 +309,15 @@ let rtcEvents = {
 ws.onmessage = function(msg) {
   switch (msg.type) {
   case 'error':
-    RTC.closePC();
     switch (msg.code) {
     case 4:
-      setState(State.ERROR, Err.ROOM_BUSY, msg.text);
+      die(Err.ROOM_BUSY, msg.text);
       break;
     case 5:
-      setState(State.ERROR, Err.INVALID_ROOM, msg.text);
+      die(Err.INVALID_ROOM, msg.text);
       break;
     default:
-      setState(State.ERROR, Err.SIGNALING, msg.text);
+      die(Err.SIGNALING, msg.text);
     }
     break;
   case 'join':
@@ -321,9 +331,9 @@ ws.onmessage = function(msg) {
       if (role == 'glass-wearer') {
         RTC.makeOffer(rtcEvents, stream)
           .then(offer => ws.send({type: 'offer', payload: offer}))
-          .catch(e => setState(State.ERROR, Err.WEBRTC, e));
+          .catch(e => die(Err.WEBRTC, e));
       }
-    }).catch(e => setState(State.ERROR, Err.MEDIA_DENIED, e));
+    }).catch(e => die(Err.MEDIA_DENIED, e));
     break;
   case 'leave':
     if (state > State.WAITING_FOR_JOIN) {
@@ -342,23 +352,23 @@ ws.onmessage = function(msg) {
               if (state >= State.GET_USER_MEDIA)
                 setState(State.ESTABLISHING);
               return RTC.makeAnswer(rtcEvents, stream, msg.payload, msg.iceServers)
-            }, e => setState(State.ERROR, Err.MEDIA_DENIED, e))
+            }, e => die(Err.MEDIA_DENIED, e))
       .then(answer => {
         if (state >= State.ESTABLISHING) {
           ws.send({type: 'answer', payload: answer});
         }
-      }).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+      }).catch(e => die(Err.WEBRTC, e));
     break;
   case 'answer':
     if (state != State.ESTABLISHING)
       break;
-    RTC.setAnswer(msg.payload).catch(e => setState(State.ERROR, Err.WEBRTC, e));
+    RTC.setAnswer(msg.payload).catch(e => die(Err.WEBRTC, e));
     break;
   case 'ice-candidate':
     if (state < State.GET_USER_MEDIA)
       break;
     RTC.addIceCandidate(msg.payload)
-      .catch(e => setState(State.ERROR, Err.WEBRTC, e));
+      .catch(e => die(Err.WEBRTC, e));
     break;
   default:
     console.warn("Unknown message type " + msg.type);
