@@ -46,6 +46,7 @@ class SignalingProtocol {
         void onError(int code, String text);
         void onJoin(String room, String role);
         void onLeave(String room, String role);
+        void onReset();
         void onAnswer(SessionDescription answer);
         void onIceCandidate(IceCandidate candidate);
     }
@@ -84,6 +85,9 @@ class SignalingProtocol {
                     break;
                 case "leave":
                     mListener.onLeave(msg.getString("room"), msg.getString("role"));
+                    break;
+                case "reset":
+                    mListener.onReset();
                     break;
                 case "answer":
                     mListener.onAnswer(new SessionDescription(SessionDescription.Type.ANSWER,
@@ -128,6 +132,16 @@ class SignalingProtocol {
         try {
             JSONObject msg = new JSONObject();
             msg.put("type", "leave");
+            send(msg);
+        } catch (JSONException e) {
+            Log.e(TAG, "Misformatted JSON", e);
+        }
+    }
+
+    void reset() {
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("type", "reset");
             send(msg);
         } catch (JSONException e) {
             Log.e(TAG, "Misformatted JSON", e);

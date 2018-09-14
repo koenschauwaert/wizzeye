@@ -328,6 +328,9 @@ public class CallService extends Service {
     private void disconnect(CallState limit) {
         Log.d(TAG, "Destroying up to " + limit);
 
+        if (mPC != null && mSignal != null && limit.ordinal() >= CallState.WAITING_FOR_HEADSET.ordinal())
+            mSignal.reset();
+
         if (mVideoCap != null)
             mVideoCap.stopCapture();
         if (mPC != null) {
@@ -581,6 +584,14 @@ public class CallService extends Service {
             if (mState.ordinal() > CallState.WAITING_FOR_OBSERVER.ordinal()) {
                 disconnect(CallState.WAITING_FOR_OBSERVER);
                 setState(CallState.WAITING_FOR_OBSERVER);
+            }
+        }
+
+        @Override
+        public void onReset() {
+            if (mState.ordinal() >= CallState.ESTABLISHING.ordinal()) {
+                createPeerConnection();
+                setState(CallState.ESTABLISHING);
             }
         }
 
