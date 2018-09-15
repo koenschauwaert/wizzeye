@@ -72,6 +72,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import app.wizzeye.app.BuildConfig;
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
@@ -267,7 +268,7 @@ public class CallService extends Service {
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
 
         // Add default STUN server
-        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302")
+        iceServers.add(PeerConnection.IceServer.builder("stun:" + BuildConfig.STUN_SERVER)
             .createIceServer());
 
         String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
