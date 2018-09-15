@@ -31,13 +31,12 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends BaseActivity {
 
     public static final String KEY_VIDEO_QUALITY = "video_quality";
     public static final String KEY_SERVER = "server";

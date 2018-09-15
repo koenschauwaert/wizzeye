@@ -42,7 +42,7 @@ import android.util.Log;
 
 import com.iristick.smartglass.core.Headset;
 import com.iristick.smartglass.core.IristickConnection;
-import com.iristick.smartglass.core.IristickManager;
+import com.iristick.smartglass.support.app.IristickApp;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.WebSocket;
 
@@ -374,7 +374,7 @@ public class CallService extends Service {
         if (limit.ordinal() >= CallState.WAITING_FOR_HEADSET.ordinal())
             return;
 
-        IristickManager.getInstance().unbind(mIristickConnection);
+        IristickApp.unregisterConnectionListener(mIristickConnection);
 
         if (limit.ordinal() >= CallState.WAITING_FOR_OBSERVER.ordinal())
             return;
@@ -575,7 +575,7 @@ public class CallService extends Service {
                 return;
 
             disconnect(CallState.WAITING_FOR_OBSERVER);
-            IristickManager.getInstance().bind(mIristickConnection, CallService.this, mHandler);
+            IristickApp.registerConnectionListener(mIristickConnection, mHandler);
             setState(CallState.WAITING_FOR_HEADSET);
         }
 
