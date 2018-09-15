@@ -34,7 +34,11 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
+
+import com.iristick.smartglass.core.Headset;
+import com.iristick.smartglass.support.app.IristickApp;
 
 import app.wizzeye.app.fragments.BaseFragment;
 import app.wizzeye.app.fragments.PermissionsFragment;
@@ -206,6 +210,15 @@ public class MainActivity extends BaseActivity implements ServiceConnection, Cal
         getWindow().setFlags(newState == CallState.IDLE || newState == CallState.ERROR ? 0 :
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (IristickApp.getInteractionMode() == Headset.INTERACTION_MODE_HUD) {
+            switch (newState) {
+            case CALL_IN_PROGRESS:
+                getSupportActionBar().hide();
+                break;
+            default:
+                getSupportActionBar().show();
+            }
+        }
     }
 
 }
