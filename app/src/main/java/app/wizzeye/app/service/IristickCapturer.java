@@ -22,6 +22,7 @@ package app.wizzeye.app.service;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.media.Image;
 import android.media.ImageReader;
@@ -29,7 +30,6 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
-import android.util.Size;
 import android.view.Surface;
 import android.widget.Toast;
 
@@ -126,10 +126,10 @@ class IristickCapturer implements CameraVideoCapturer {
         mObserver = capturerObserver;
         mCameraThreadHandler = surfaceTextureHelper.getHandler();
 
-        Size[] sizes = mHeadset.getCameraCharacteristics(mCameraNames[0])
+        Point[] sizes = mHeadset.getCameraCharacteristics(mCameraNames[0])
             .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
             .getSizes(CaptureRequest.FORMAT_JPEG);
-        mImageReader = ImageReader.newInstance(sizes[0].getWidth(), sizes[0].getHeight(),
+        mImageReader = ImageReader.newInstance(sizes[0].x, sizes[0].y,
             ImageFormat.JPEG, 2);
         mImageReader.setOnImageAvailableListener(mImageReaderListener, mCameraThreadHandler);
     }
