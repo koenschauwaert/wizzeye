@@ -458,12 +458,7 @@ public class CallService extends Service {
                 mHandler.post(() -> {
                     if (mState != CallState.WAITING_FOR_NETWORK)
                         return;
-
-                    // Connect to server through websocket
-                    mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
-                        mUri.buildUpon().path("/ws").build().toString(),
-                        SignalingProtocol.VERSION, mSocketConnectCallback);
-
+                    connectToServer();
                     setState(CallState.CONNECTING_TO_SERVER);
                 });
             }
@@ -483,6 +478,12 @@ public class CallService extends Service {
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 .build(),
             mNetworkMonitor);
+    }
+
+    private void connectToServer() {
+        mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
+            mUri.buildUpon().path("/ws").build().toString(),
+            SignalingProtocol.VERSION, mSocketConnectCallback);
     }
 
     private final AsyncHttpClient.WebSocketConnectCallback mSocketConnectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
@@ -551,6 +552,15 @@ public class CallService extends Service {
     };
 
     private final SignalingProtocol.Listener mSignalingCallback = new SignalingProtocol.Listener() {
+        @Override
+        public void onDisconnected(SignalingProtocol signal) {
+            if (mState.ordinal() <= CallState.CONNECTING_TO_SERVER.ordinal() || mSignal != signal)
+                return;
+            disconnect(CallState.WAITING_FOR_NETWORK);
+            connectToServer();
+            setState(CallState.CONNECTING_TO_SERVER);
+        }
+
         @Override
         public void onError(int code, String text) {
             if (mState.ordinal() <= CallState.IDLE.ordinal())

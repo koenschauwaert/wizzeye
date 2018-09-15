@@ -43,6 +43,7 @@ class SignalingProtocol {
         int ERROR_ROLE_TAKEN = 4;
         int ERROR_BAD_ROOM = 5;
 
+        void onDisconnected(SignalingProtocol signal);
         void onError(int code, String text);
         void onJoin(String room, String role);
         void onLeave(String room, String role);
@@ -63,11 +64,17 @@ class SignalingProtocol {
         mSocket = socket;
         mListener = listener;
         mHandler = handler;
+        socket.setClosedCallback(this::onClosed);
         socket.setStringCallback(this::onMessage);
     }
 
     void close() {
         mSocket.close();
+    }
+
+    private void onClosed(Exception ex) {
+        Log.d(TAG, "Socket closed");
+        mHandler.post(() -> mListener.onDisconnected(this));
     }
 
     private void onMessage(final String s) {
