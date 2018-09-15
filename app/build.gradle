@@ -34,6 +34,21 @@ android {
         targetCompatibility 1.8
         sourceCompatibility 1.8
     }
+    if (rootProject.hasProperty('storeFile')) {
+        signingConfigs {
+            release {
+                storeFile rootProject.file(rootProject.storeFile)
+                storePassword rootProject.storePassword
+                keyAlias rootProject.keyAlias
+                keyPassword rootProject.keyPassword
+            }
+        }
+        buildTypes {
+            release {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
 }
 
 dependencies {
