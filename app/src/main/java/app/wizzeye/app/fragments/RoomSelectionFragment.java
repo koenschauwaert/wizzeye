@@ -115,7 +115,7 @@ public class RoomSelectionFragment extends BaseFragment implements TextWatcher {
         String room = mRoom.getText().toString();
         if (validateRoomName(room) != 0)
             return;
-        Uri server = Uri.parse(mPreferences.getString(SettingsActivity.KEY_SERVER, getString(R.string.pref_server_default)));
+        Uri server = Uri.parse(mPreferences.getString(SettingsActivity.KEY_SERVER, getString(R.string.default_server)));
         mMainActivity.startService(new Intent(mMainActivity, CallService.class)
             .setData(Uri.withAppendedPath(server, Uri.encode(room))));
     }

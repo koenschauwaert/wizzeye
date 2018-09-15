@@ -34,8 +34,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:scheme="https"
-                    android:host="wizzeye.app" />
+                    android:scheme="${hostScheme}"
+                    android:host="${hostName}" />
             </intent-filter>
         </activity>
 

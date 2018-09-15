@@ -116,7 +116,7 @@ public class SettingsActivity extends BaseActivity {
         private final Preference.OnPreferenceClickListener mLegalClickListener = pref -> {
             Uri uri = Uri.withAppendedPath(
                 Uri.parse(PreferenceManager.getDefaultSharedPreferences(getContext())
-                    .getString(KEY_SERVER, getString(R.string.pref_server_default))),
+                    .getString(KEY_SERVER, getString(R.string.default_server))),
                 "s/legal/");
             Intent baseIntent = new Intent(Intent.ACTION_VIEW, uri);
             PackageManager pm = getActivity().getPackageManager();

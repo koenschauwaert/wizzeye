@@ -13,7 +13,7 @@
         <EditTextPreference
             android:key="server"
             android:title="@string/pref_server_title"
-            android:defaultValue="@string/pref_server_default" />
+            android:defaultValue="@string/default_server" />
 
     </PreferenceCategory>
 

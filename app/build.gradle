@@ -21,14 +21,22 @@
 
 apply plugin: 'com.android.application'
 
+def props = new Properties()
+props.load(new FileInputStream(project.file('custom.properties')))
+
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "app.wizzeye.app"
+        applicationId props.applicationId
         minSdkVersion 24
         targetSdkVersion 27
         versionCode 1
         versionName "0.1"
+        manifestPlaceholders = [
+            hostScheme: props.hostScheme,
+            hostName: props.hostName,
+        ]
+        resValue('string', "default_server", "${props.hostScheme}://${props.hostName}")
     }
     compileOptions {
         targetCompatibility 1.8
