@@ -160,13 +160,14 @@ public class CallService extends Service {
 
     public void hangup() {
         if (mState.ordinal() > CallState.IDLE.ordinal()) {
-            disconnect(CallState.IDLE);
             setState(CallState.IDLE);
+            disconnect(CallState.IDLE);
         }
     }
 
     public void restart() {
         if (mState.ordinal() > CallState.IDLE.ordinal()) {
+            setState(CallState.WAITING_FOR_NETWORK);
             disconnect(CallState.ERROR);
             startNetworkMonitor();
         }
@@ -411,9 +412,9 @@ public class CallService extends Service {
     }
 
     private void setError(CallError error) {
-        disconnect(CallState.ERROR);
         mError = error;
         setState(CallState.ERROR);
+        disconnect(CallState.ERROR);
     }
 
     @Override
@@ -442,6 +443,7 @@ public class CallService extends Service {
 
         mUri = uri;
         mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, getRoomName()).apply();
+        setState(CallState.WAITING_FOR_NETWORK);
         startNetworkMonitor();
 
         return START_REDELIVER_INTENT;
@@ -467,13 +469,13 @@ public class CallService extends Service {
             public void onLost(final Network network) {
                 mHandler.post(() -> {
                     if (mState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal()) {
+                        setState(CallState.WAITING_FOR_NETWORK);
                         disconnect(CallState.WAITING_FOR_NETWORK);
                         startNetworkMonitor();
                     }
                 });
             }
         };
-        setState(CallState.WAITING_FOR_NETWORK);
         mConnectivityManager.requestNetwork(new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 .build(),
@@ -510,9 +512,11 @@ public class CallService extends Service {
     private final IristickConnection mIristickConnection = new IristickConnection() {
         @Override
         public void onHeadsetConnected(Headset headset) {
+            if (mState.ordinal() < CallState.WAITING_FOR_HEADSET.ordinal())
+                return;
             mHeadset = headset;
-            createPeerConnection();
             setState(CallState.ESTABLISHING);
+            createPeerConnection();
         }
 
         @Override
@@ -521,8 +525,8 @@ public class CallService extends Service {
             // Iristick Services.
             mHandler.post(() -> {
                if (mState.ordinal() > CallState.WAITING_FOR_HEADSET.ordinal()) {
-                   disconnect(CallState.WAITING_FOR_HEADSET);
                    setState(CallState.WAITING_FOR_HEADSET);
+                   disconnect(CallState.WAITING_FOR_HEADSET);
                }
             });
         }
@@ -556,9 +560,9 @@ public class CallService extends Service {
         public void onDisconnected(SignalingProtocol signal) {
             if (mState.ordinal() <= CallState.CONNECTING_TO_SERVER.ordinal() || mSignal != signal)
                 return;
+            setState(CallState.CONNECTING_TO_SERVER);
             disconnect(CallState.WAITING_FOR_NETWORK);
             connectToServer();
-            setState(CallState.CONNECTING_TO_SERVER);
         }
 
         @Override
@@ -585,24 +589,24 @@ public class CallService extends Service {
             if (!"observer".equals(role) || mState.ordinal() < CallState.WAITING_FOR_OBSERVER.ordinal())
                 return;
 
+            setState(CallState.WAITING_FOR_HEADSET);
             disconnect(CallState.WAITING_FOR_OBSERVER);
             IristickApp.registerConnectionListener(mIristickConnection, mHandler);
-            setState(CallState.WAITING_FOR_HEADSET);
         }
 
         @Override
         public void onLeave(String room, String role) {
             if (mState.ordinal() > CallState.WAITING_FOR_OBSERVER.ordinal()) {
-                disconnect(CallState.WAITING_FOR_OBSERVER);
                 setState(CallState.WAITING_FOR_OBSERVER);
+                disconnect(CallState.WAITING_FOR_OBSERVER);
             }
         }
 
         @Override
         public void onReset() {
             if (mState.ordinal() >= CallState.ESTABLISHING.ordinal()) {
-                createPeerConnection();
                 setState(CallState.ESTABLISHING);
+                createPeerConnection();
             }
         }
 
@@ -698,8 +702,8 @@ public class CallService extends Service {
                         setError(CallError.ICE);
                         break;
                     case CALL_IN_PROGRESS:
-                        createPeerConnection();
                         setState(CallState.ESTABLISHING);
+                        createPeerConnection();
                         break;
                     }
                 });
