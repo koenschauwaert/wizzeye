@@ -29,6 +29,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SeekBar;
+import android.widget.Toast;
+
+import com.iristick.smartglass.core.Headset;
+import com.iristick.smartglass.support.app.IristickApp;
 
 import org.webrtc.SurfaceViewRenderer;
 
@@ -38,11 +42,15 @@ import app.wizzeye.app.service.LaserMode;
 
 public class CallFragment extends InRoomFragment {
 
+    private static final String STATE_FOCUS_HINT_SHOWN = "focus_hint_shown";
+
     private SurfaceViewRenderer mVideo;
     private SeekBar mZoom;
     private FloatingActionButton mMore;
     private DrawerLayout mDrawerLayout;
     private NavigationView mOptions;
+
+    private boolean mFocusHintShown = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -71,7 +79,16 @@ public class CallFragment extends InRoomFragment {
         mOptions.getMenu().findItem(R.id.laser).setChecked(mService.getLaser() != LaserMode.OFF);
         mOptions.getMenu().findItem(R.id.laser).setIcon(mService.getLaser().icon);
 
+        if (savedInstanceState != null)
+            mFocusHintShown = savedInstanceState.getBoolean(STATE_FOCUS_HINT_SHOWN, false);
+
         return view;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_FOCUS_HINT_SHOWN, mFocusHintShown);
     }
 
     @Override
@@ -106,6 +123,11 @@ public class CallFragment extends InRoomFragment {
     private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (IristickApp.getInteractionMode() == Headset.INTERACTION_MODE_HUD &&
+                !mFocusHintShown && progress > 0) {
+                Toast.makeText(getContext(), R.string.call_hint_focus, Toast.LENGTH_LONG).show();
+                mFocusHintShown = true;
+            }
             mService.setZoom(progress);
         }
 

@@ -75,6 +75,7 @@
     <string name="error_try_again">Try again</string>
 
     <!-- CallFragment -->
+    <string name="call_hint_focus">Tap the zoom bar to refocus</string>
     <string name="call_option_torch">Flashlight</string>
     <string name="call_option_laser">Laser</string>
     <string name="call_action_take_picture">Take picture</string>
