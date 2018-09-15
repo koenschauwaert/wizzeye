@@ -43,9 +43,6 @@
         <Preference
             android:key="about_legal"
             android:title="@string/pref_about_legal">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://wizzeye.app/s/legal/" />
         </Preference>
 
     </PreferenceCategory>

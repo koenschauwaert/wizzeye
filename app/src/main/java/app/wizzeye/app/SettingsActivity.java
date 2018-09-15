@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.ListPreference;
@@ -80,7 +81,7 @@ public class SettingsActivity extends BaseActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
             findPreference(KEY_ABOUT_VERSION).setSummary(getString(R.string.pref_about_version_summary, BuildConfig.VERSION_NAME));
-            findPreference(KEY_ABOUT_LEGAL).setOnPreferenceClickListener(mIntentClickListener);
+            findPreference(KEY_ABOUT_LEGAL).setOnPreferenceClickListener(mLegalClickListener);
         }
 
         @Override
@@ -112,13 +113,18 @@ public class SettingsActivity extends BaseActivity {
         /**
          * Open preference intent, but remove Wizzeye from the list of apps to choose from.
          */
-        private final Preference.OnPreferenceClickListener mIntentClickListener = pref -> {
+        private final Preference.OnPreferenceClickListener mLegalClickListener = pref -> {
+            Uri uri = Uri.withAppendedPath(
+                Uri.parse(PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .getString(KEY_SERVER, getString(R.string.pref_server_default))),
+                "s/legal/");
+            Intent baseIntent = new Intent(Intent.ACTION_VIEW, uri);
             PackageManager pm = getActivity().getPackageManager();
-            List<ResolveInfo> activities = pm.queryIntentActivities(pref.getIntent(), 0);
+            List<ResolveInfo> activities = pm.queryIntentActivities(baseIntent, 0);
             List<Intent> intents = new ArrayList<>();
             for (ResolveInfo info : activities) {
                 if (!BuildConfig.APPLICATION_ID.equals(info.activityInfo.packageName)) {
-                    Intent intent = new Intent(pref.getIntent());
+                    Intent intent = new Intent(baseIntent);
                     intent.setPackage(info.activityInfo.packageName);
                     intents.add(intent);
                 }
