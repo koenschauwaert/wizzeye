@@ -23,7 +23,6 @@ package app.wizzeye.app.service;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
-import android.graphics.SurfaceTexture;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaScannerConnection;
@@ -258,6 +257,7 @@ class IristickCapturer implements CameraVideoCapturer {
         synchronized (mStateLock) {
             if (resetFailures)
                 mFailureCount = 0;
+            closeCamera();
             mSessionOpening = true;
             mCameraThreadHandler.post(() -> {
                 synchronized (mStateLock) {
@@ -284,11 +284,13 @@ class IristickCapturer implements CameraVideoCapturer {
             mCameraThreadHandler.post(() -> {
                 mSurfaceHelper.stopListening();
                 try {
-                    camera.close();
+                    if (camera != null)
+                        camera.close();
                 } catch (IllegalStateException e) {
                     // ignore
                 }
-                surface.release();
+                if (surface != null)
+                    surface.release();
             });
             mCaptureSession = null;
             mSurface = null;
@@ -359,9 +361,7 @@ class IristickCapturer implements CameraVideoCapturer {
 
             if ((mZoom == 0 && mCameraIdx != 0) || (mZoom > 0 && mCameraIdx != 1)) {
                 Log.d(TAG, "Switching cameras");
-                closeCamera();
                 mCameraIdx = (mCameraIdx + 1) % 2;
-                mFailureCount = 0;
                 openCamera(true);
             } else {
                 CaptureRequest.Builder builder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
