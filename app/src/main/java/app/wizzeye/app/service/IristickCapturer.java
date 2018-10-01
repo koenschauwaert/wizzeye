@@ -219,7 +219,7 @@ class IristickCapturer implements CameraVideoCapturer {
         });
     }
 
-    public boolean getTroch() {
+    public boolean getTorch() {
         return mTorch;
     }
 

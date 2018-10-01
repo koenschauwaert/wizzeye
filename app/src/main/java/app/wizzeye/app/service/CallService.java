@@ -195,7 +195,7 @@ public class CallService extends Service {
     }
 
     public boolean getTorch() {
-        return mVideoCap != null && mVideoCap.getTroch();
+        return mVideoCap != null && mVideoCap.getTorch();
     }
 
     public void setTorch(boolean torch) {
