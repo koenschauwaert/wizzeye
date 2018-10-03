@@ -29,6 +29,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
@@ -46,13 +47,16 @@ public class CallFragment extends InRoomFragment {
     private static final String STATE_FOCUS_HINT_SHOWN = "focus_hint_shown";
 
     private static final int MSG_PARAMETERS_CHANGED = 0;
+    private static final int MSG_TURBULENCE = 1;
 
     private SurfaceViewRenderer mVideo;
+    private ImageView mTurbulence;
     private SeekBar mZoom;
     private FloatingActionButton mMore;
     private DrawerLayout mDrawerLayout;
     private NavigationView mOptions;
     private Message mParametersChangedMessage;
+    private Message mTurbulenceMessage;
 
     private boolean mFocusHintShown = false;
 
@@ -63,6 +67,8 @@ public class CallFragment extends InRoomFragment {
         mVideo.init(mService.getEglBase().getEglBaseContext(), null);
         mVideo.setEnableHardwareScaler(true);
         mVideo.setOnClickListener(v -> refocus());
+
+        mTurbulence = view.findViewById(R.id.turbulence);
 
         mZoom = view.findViewById(R.id.zoom);
         if (mCall != null)
@@ -79,9 +85,11 @@ public class CallFragment extends InRoomFragment {
 
         Handler handler = new Handler(this::handleMessage);
         mParametersChangedMessage = handler.obtainMessage(MSG_PARAMETERS_CHANGED);
+        mTurbulenceMessage = handler.obtainMessage(MSG_TURBULENCE);
         if (mCall != null) {
             mCall.registerMessage(Call.Event.PARAMETERS_CHANGED, mParametersChangedMessage);
             handler.sendEmptyMessage(MSG_PARAMETERS_CHANGED);
+            mCall.registerMessage(Call.Event.TURBULENCE, mTurbulenceMessage);
         }
 
         if (savedInstanceState != null)
@@ -92,9 +100,12 @@ public class CallFragment extends InRoomFragment {
 
     @Override
     public void onDestroy() {
-        if (mCall != null)
+        if (mCall != null) {
             mCall.unregisterMessage(mParametersChangedMessage);
+            mCall.unregisterMessage(mTurbulenceMessage);
+        }
         mParametersChangedMessage.recycle();
+        mTurbulenceMessage.recycle();
         super.onDestroy();
     }
 
@@ -146,6 +157,9 @@ public class CallFragment extends InRoomFragment {
             mOptions.getMenu().findItem(R.id.torch).setChecked(mCall.getTorch());
             mOptions.getMenu().findItem(R.id.laser).setChecked(mCall.getLaser() != LaserMode.OFF);
             mOptions.getMenu().findItem(R.id.laser).setIcon(mCall.getLaser().icon);
+            return true;
+        case MSG_TURBULENCE:
+            mTurbulence.setVisibility(msg.arg1 == 1 ? View.VISIBLE : View.GONE);
             return true;
         }
         return false;

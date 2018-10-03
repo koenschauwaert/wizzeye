@@ -24,6 +24,18 @@
             app:layout_constraintBottom_toBottomOf="parent"
             />
 
+        <ImageView
+            android:id="@+id/turbulence"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:src="@drawable/turbulence"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="@+id/video"
+            app:layout_constraintLeft_toLeftOf="@+id/video"
+            tools:visibility="visible"
+            />
+
         <FrameLayout
             android:id="@+id/zoom_layout"
             android:layout_width="48dp"
