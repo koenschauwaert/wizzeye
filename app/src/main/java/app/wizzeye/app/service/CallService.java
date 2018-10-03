@@ -28,51 +28,23 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Icon;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.iristick.smartglass.core.Headset;
-import com.iristick.smartglass.core.IristickConnection;
-import com.iristick.smartglass.support.app.IristickApp;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.WebSocket;
-
-import org.webrtc.AudioSource;
-import org.webrtc.AudioTrack;
-import org.webrtc.CameraVideoCapturer;
-import org.webrtc.DataChannel;
-import org.webrtc.DefaultVideoDecoderFactory;
-import org.webrtc.DefaultVideoEncoderFactory;
 import org.webrtc.EglBase;
-import org.webrtc.IceCandidate;
-import org.webrtc.MediaConstraints;
-import org.webrtc.MediaStream;
-import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
-import org.webrtc.RtpReceiver;
-import org.webrtc.SdpObserver;
-import org.webrtc.SessionDescription;
-import org.webrtc.SurfaceTextureHelper;
-import org.webrtc.VideoSink;
-import org.webrtc.VideoSource;
-import org.webrtc.VideoTrack;
 import org.webrtc.voiceengine.WebRtcAudioManager;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Future;
 
-import app.wizzeye.app.BuildConfig;
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
@@ -94,210 +66,25 @@ public class CallService extends Service {
     private static final int NOTIFICATION_ID = 1;
     private static final String ACTION_HANGUP = "app.wizzeye.action.HANGUP";
 
+    private static final int MSG_CALL_STATE_CHANGED = 0;
+
     private final LocalBinder mBinder = new LocalBinder();
     private final List<Listener> mListeners = new LinkedList<>();
 
     private SharedPreferences mPreferences;
     private NotificationManager mNotificationManager;
-    private ConnectivityManager mConnectivityManager;
-    private Handler mHandler;
     private EglBase mEglBase;
 
-    private CallState mState = CallState.IDLE;
-    private CallError mError;
-
-    private Uri mUri;
-    private ConnectivityManager.NetworkCallback mNetworkMonitor;
-    private Future<WebSocket> mFutureSocket;
-    private SignalingProtocol mSignal;
-    private Headset mHeadset;
-    private PeerConnectionFactory mFactory;
-    private SurfaceTextureHelper mSurfaceTextureHelper;
-    private IristickCapturer mVideoCap;
-    private VideoSource mVideoSrc;
-    private VideoTrack mVideoTrack;
-    private AudioSource mAudioSrc;
-    private AudioTrack mAudioTrack;
-    private PeerConnection mPC;
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Public API
-
-    public void registerListener(Listener listener) {
-        mListeners.add(listener);
-        listener.onCallStateChanged(mState);
-    }
-
-    public void unregisterListener(Listener listener) {
-        mListeners.remove(listener);
-    }
-
-    public CallState getState() {
-        return mState;
-    }
-
-    public CallError getError() {
-        return mError;
-    }
-
-    public String getRoomLink() {
-        return mUri != null ? mUri.toString() : "";
-    }
-
-    public String getRoomName() {
-        if (mUri == null)
-            return "";
-        String name = mUri.getPath();
-        name = name.replaceAll("^/+", "");
-        name = name.replaceAll("/+$", "");
-        return name;
-    }
-
-    public EglBase getEglBase() {
-        return mEglBase;
-    }
-
-    public void hangup() {
-        if (mState.ordinal() > CallState.IDLE.ordinal()) {
-            setState(CallState.IDLE);
-            disconnect(CallState.IDLE);
-        }
-    }
-
-    public void restart() {
-        if (mState.ordinal() > CallState.IDLE.ordinal()) {
-            setState(CallState.WAITING_FOR_NETWORK);
-            disconnect(CallState.ERROR);
-            startNetworkMonitor();
-        }
-    }
-
-    public void addVideoSink(VideoSink sink) {
-        if (mVideoTrack != null) {
-            mVideoTrack.addSink(sink);
-        }
-    }
-
-    public void removeVideoSink(VideoSink sink) {
-        if (mVideoTrack != null) {
-            mVideoTrack.removeSink(sink);
-        }
-    }
-
-    public int getZoom() {
-        return mVideoCap != null ? mVideoCap.getZoom() : 0;
-    }
-
-    public void setZoom(int zoom) {
-        if (mVideoCap != null)
-            mVideoCap.setZoom(zoom);
-    }
-
-    public boolean getTorch() {
-        return mVideoCap != null && mVideoCap.getTorch();
-    }
-
-    public void setTorch(boolean torch) {
-        if (mVideoCap != null)
-            mVideoCap.setTorch(torch);
-    }
-
-    public LaserMode getLaser() {
-        return mVideoCap != null ? mVideoCap.getLaser() : LaserMode.OFF;
-    }
-
-    public void setLaser(LaserMode laser) {
-        if (mVideoCap != null)
-            mVideoCap.setLaser(laser);
-        mPreferences.edit().putString(SettingsActivity.KEY_LASER_MODE,
-            laser == LaserMode.AUTO ? LaserMode.AUTO.name() : LaserMode.OFF.name()).apply();
-    }
-
-    public void triggerAF() {
-        if (mVideoCap != null)
-            mVideoCap.triggerAF();
-    }
-
-    public void takePicture() {
-        if (mVideoCap != null)
-            mVideoCap.takePicture();
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Helpers
-
-    private void setState(CallState newState) {
-        Log.i(TAG, "Switching to state " + newState);
-        mState = newState;
-        if (mState.ordinal() > CallState.IDLE.ordinal())
-            mNotificationManager.notify(NOTIFICATION_ID, buildNotification());
-        for (Listener l : mListeners)
-            l.onCallStateChanged(newState);
-    }
-
-    private Notification buildNotification() {
-        Notification.Builder builder = new Notification.Builder(this);
-        builder.setSmallIcon(R.drawable.notification);
-        builder.setColor(getColor(R.color.primary));
-        builder.setContentTitle(getString(mState.title));
-        if (mState == CallState.ERROR) {
-            builder.setContentText(getString(mError.message));
-            builder.setStyle(new Notification.BigTextStyle());
-        }
-        builder.setSubText(getRoomName());
-        builder.setContentIntent(PendingIntent.getActivity(this, 0,
-            new Intent(this, MainActivity.class), 0));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setChannelId(NOTIFICATION_CHANNEL);
-        }
-        if (mState.ordinal() > CallState.IDLE.ordinal()) {
-            builder.addAction(new Notification.Action.Builder(
-                    Icon.createWithResource(this, R.drawable.hangup),
-                    getString(R.string.hangup),
-                    PendingIntent.getService(this, 0,
-                        new Intent(this, getClass())
-                            .setAction(ACTION_HANGUP),
-                        0))
-                .build());
-        }
-        return builder.build();
-    }
-
-    private List<PeerConnection.IceServer> getIceServers() {
-        List<PeerConnection.IceServer> iceServers = new ArrayList<>();
-
-        // Add default STUN server
-        iceServers.add(PeerConnection.IceServer.builder("stun:" + BuildConfig.STUN_SERVER)
-            .createIceServer());
-
-        String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
-        if (!turnHost.isEmpty()) {
-            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=udp")
-                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
-                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
-                .createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=tcp")
-                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
-                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
-                .createIceServer());
-        }
-
-        return iceServers;
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Service implementation
+    private Call mCall;
+    private Message mCallStateMessage;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mNotificationManager = getSystemService(NotificationManager.class);
-        mConnectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        mHandler = new Handler();
+        Handler handler = new Handler(this::handleMessage);
+        mCallStateMessage = handler.obtainMessage(MSG_CALL_STATE_CHANGED);
 
         mEglBase = EglBase.create();
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
@@ -316,105 +103,38 @@ public class CallService extends Service {
 
     @Override
     public void onDestroy() {
-        disconnect(CallState.IDLE);
+        if (mCall != null) {
+            mCall.unregisterMessage(mCallStateMessage);
+            mCall.dispose();
+            mCall = null;
+        }
+        mCallStateMessage.recycle();
         PeerConnectionFactory.shutdownInternalTracer();
         mEglBase.release();
         super.onDestroy();
     }
 
+    public void registerListener(Listener listener) {
+        mListeners.add(listener);
+        listener.onCallStateChanged(mCall != null ? mCall.getState() : CallState.IDLE);
+    }
+
+    public void unregisterListener(Listener listener) {
+        mListeners.remove(listener);
+    }
+
+    @Nullable
+    public Call getCall() {
+        return mCall;
+    }
+
+    public EglBase getEglBase() {
+        return mEglBase;
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
-    }
-
-    private void disconnect(CallState limit) {
-        Log.d(TAG, "Destroying up to " + limit);
-
-        if (mPC != null && mSignal != null && limit.ordinal() >= CallState.WAITING_FOR_HEADSET.ordinal())
-            mSignal.reset();
-
-        if (mVideoCap != null)
-            mVideoCap.stopCapture();
-        if (mPC != null) {
-            mPC.close();
-            mPC = null;
-        }
-        if (mAudioTrack != null) {
-            mAudioTrack.dispose();
-            mAudioTrack = null;
-        }
-        if (mAudioSrc != null) {
-            mAudioSrc.dispose();
-            mAudioSrc = null;
-        }
-        if (mVideoTrack != null) {
-            mVideoTrack.dispose();
-            mVideoTrack = null;
-        }
-        if (mVideoCap != null) {
-            mVideoCap.dispose();
-            mVideoCap = null;
-        }
-        if (mVideoSrc != null) {
-            mVideoSrc.dispose();
-            mVideoSrc = null;
-        }
-        if (mSurfaceTextureHelper != null) {
-            mSurfaceTextureHelper.dispose();
-            mSurfaceTextureHelper = null;
-        }
-        if (mFactory != null) {
-            mFactory.dispose();
-            mFactory = null;
-        }
-
-        if (limit.ordinal() >= CallState.ESTABLISHING.ordinal())
-            return;
-
-        mHeadset = null;
-
-        if (limit.ordinal() >= CallState.WAITING_FOR_HEADSET.ordinal())
-            return;
-
-        IristickApp.unregisterConnectionListener(mIristickConnection);
-
-        if (limit.ordinal() >= CallState.WAITING_FOR_OBSERVER.ordinal())
-            return;
-
-        if (mSignal != null) {
-            mSignal.leave();
-            mSignal.close();
-            mSignal = null;
-        }
-
-        if (limit.ordinal() >= CallState.CONNECTING_TO_SERVER.ordinal())
-            return;
-
-        if (mFutureSocket != null) {
-            mFutureSocket.cancel(true);
-            mFutureSocket = null;
-        }
-
-        if (limit.ordinal() >= CallState.WAITING_FOR_NETWORK.ordinal())
-            return;
-
-        if (mNetworkMonitor != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNetworkMonitor);
-            mNetworkMonitor = null;
-        }
-
-        if (limit.ordinal() >= CallState.ERROR.ordinal())
-            return;
-
-        mUri = null;
-        stopForeground(true);
-        stopSelf();
-    }
-
-    private void setError(CallError error) {
-        mError = error;
-        setState(CallState.ERROR);
-        disconnect(CallState.ERROR);
     }
 
     @Override
@@ -424,12 +144,13 @@ public class CallService extends Service {
         Log.i(TAG, "onStart(a=" + action + ", d=" + uri + ")");
 
         if (ACTION_HANGUP.equals(action)) {
-            hangup();
+            if (mCall != null)
+                mCall.stop();
             stopSelf();
             return START_NOT_STICKY;
         }
 
-        if (mState != CallState.IDLE) {
+        if (mCall != null) {
             Log.w(TAG, "Call in progress, ignoring start request");
             return START_NOT_STICKY;
         }
@@ -440,384 +161,64 @@ public class CallService extends Service {
         }
 
         startForeground(NOTIFICATION_ID, buildNotification());
-
-        mUri = uri;
-        mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, getRoomName()).apply();
-        setState(CallState.WAITING_FOR_NETWORK);
-        startNetworkMonitor();
-
+        mCall = new Call(this, mEglBase, uri);
+        mCall.registerMessage(Call.Event.STATE_CHANGED, mCallStateMessage);
+        mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, mCall.getRoomName()).apply();
+        mCall.start();
         return START_REDELIVER_INTENT;
     }
 
-    private void startNetworkMonitor() {
-        if (mNetworkMonitor != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNetworkMonitor);
-            mNetworkMonitor = null;
+    private boolean handleMessage(Message msg) {
+        switch (msg.what) {
+        case MSG_CALL_STATE_CHANGED:
+            if (msg.obj != mCall)
+                return true;
+            CallState newState = CallState.values()[msg.arg1];
+            if (newState == CallState.IDLE) {
+                mCall.unregisterMessage(mCallStateMessage);
+                mCall.dispose();
+                mCall = null;
+                stopForeground(true);
+                stopSelf();
+            } else {
+                mNotificationManager.notify(NOTIFICATION_ID, buildNotification());
+            }
+            for (Listener l : mListeners)
+                l.onCallStateChanged(newState);
+            return true;
         }
-        mNetworkMonitor = new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(final Network network) {
-                mHandler.post(() -> {
-                    if (mState != CallState.WAITING_FOR_NETWORK)
-                        return;
-                    connectToServer();
-                    setState(CallState.CONNECTING_TO_SERVER);
-                });
-            }
-
-            @Override
-            public void onLost(final Network network) {
-                mHandler.post(() -> {
-                    if (mState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal()) {
-                        setState(CallState.WAITING_FOR_NETWORK);
-                        disconnect(CallState.WAITING_FOR_NETWORK);
-                        startNetworkMonitor();
-                    }
-                });
-            }
-        };
-        mConnectivityManager.requestNetwork(new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build(),
-            mNetworkMonitor);
+        return false;
     }
 
-    private void connectToServer() {
-        mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
-            mUri.buildUpon().path("/ws").build().toString(),
-            SignalingProtocol.VERSION, mSocketConnectCallback);
+    private Notification buildNotification() {
+        CallState state = mCall != null ? mCall.getState() : CallState.IDLE;
+        CallError error = mCall != null ? mCall.getError() : null;
+        Notification.Builder builder = new Notification.Builder(this);
+        builder.setSmallIcon(R.drawable.notification);
+        builder.setColor(getColor(R.color.primary));
+        builder.setContentTitle(getString(state.title));
+        if (state == CallState.ERROR && error != null) {
+            builder.setContentText(getString(error.message));
+            builder.setStyle(new Notification.BigTextStyle());
+        }
+        if (mCall != null)
+            builder.setSubText(mCall.getRoomName());
+        builder.setContentIntent(PendingIntent.getActivity(this, 0,
+            new Intent(this, MainActivity.class), 0));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setChannelId(NOTIFICATION_CHANNEL);
+        }
+        if (state.ordinal() > CallState.IDLE.ordinal()) {
+            builder.addAction(new Notification.Action.Builder(
+                Icon.createWithResource(this, R.drawable.hangup),
+                getString(R.string.hangup),
+                PendingIntent.getService(this, 0,
+                    new Intent(this, getClass())
+                        .setAction(ACTION_HANGUP),
+                    0))
+                .build());
+        }
+        return builder.build();
     }
 
-    private final AsyncHttpClient.WebSocketConnectCallback mSocketConnectCallback = new AsyncHttpClient.WebSocketConnectCallback() {
-        @Override
-        public void onCompleted(final Exception ex, final WebSocket webSocket) {
-            mHandler.post(() -> {
-                mFutureSocket = null;
-                if (mState.ordinal() < CallState.CONNECTING_TO_SERVER.ordinal()) {
-                    Log.d(TAG, "Discarding obsolete websocket connection");
-                    if (webSocket != null)
-                        webSocket.close();
-                } else if (ex == null) {
-                    mSignal = new SignalingProtocol(webSocket, mSignalingCallback, mHandler);
-                    mSignal.join(getRoomName());
-                    setState(CallState.WAITING_FOR_OBSERVER);
-                } else {
-                    Log.e(TAG, "Failed to connect to server", ex);
-                    setError(CallError.SERVER_UNREACHABLE);
-                }
-            });
-        }
-    };
-
-    private final IristickConnection mIristickConnection = new IristickConnection() {
-        @Override
-        public void onHeadsetConnected(Headset headset) {
-            if (mState.ordinal() < CallState.WAITING_FOR_HEADSET.ordinal())
-                return;
-            mHeadset = headset;
-            setState(CallState.ESTABLISHING);
-            createPeerConnection();
-        }
-
-        @Override
-        public void onHeadsetDisconnected(Headset headset) {
-            // Make this asynchronous, as onHeadsetDisconnected gets called when we unbind from
-            // Iristick Services.
-            mHandler.post(() -> {
-               if (mState.ordinal() > CallState.WAITING_FOR_HEADSET.ordinal()) {
-                   setState(CallState.WAITING_FOR_HEADSET);
-                   disconnect(CallState.WAITING_FOR_HEADSET);
-               }
-            });
-        }
-
-        @Override
-        public void onIristickServiceInitialized() {
-        }
-
-        @Override
-        public void onIristickServiceError(int error) {
-            if (mState.ordinal() < CallState.WAITING_FOR_HEADSET.ordinal())
-                return;
-            switch (error) {
-            case ERROR_NOT_INSTALLED:
-                Log.e(TAG, "Iristick Services not installed");
-                setError(CallError.SERVICES_NOT_INSTALLED);
-                break;
-            case ERROR_FUTURE_SDK:
-                Log.e(TAG, "Iristick Services are outdated");
-                setError(CallError.SERVICES_OUTDATED);
-                break;
-            default:
-                Log.e(TAG, "Unknown Iristick Services error " + error);
-                setError(CallError.SERVICES_UNKNOWN);
-            }
-        }
-    };
-
-    private final SignalingProtocol.Listener mSignalingCallback = new SignalingProtocol.Listener() {
-        @Override
-        public void onDisconnected(SignalingProtocol signal) {
-            if (mState.ordinal() <= CallState.CONNECTING_TO_SERVER.ordinal() || mSignal != signal)
-                return;
-            setState(CallState.CONNECTING_TO_SERVER);
-            disconnect(CallState.WAITING_FOR_NETWORK);
-            connectToServer();
-        }
-
-        @Override
-        public void onError(int code, String text) {
-            if (mState.ordinal() <= CallState.IDLE.ordinal())
-                return;
-            switch (code) {
-            case ERROR_ROLE_TAKEN:
-                Log.i(TAG, "A glass-wearer is already present in the room");
-                setError(CallError.ROOM_BUSY);
-                break;
-            case ERROR_BAD_ROOM:
-                Log.i(TAG, "Invalid room name");
-                setError(CallError.INVALID_ROOM);
-                break;
-            default:
-                Log.e(TAG, "Signaling error " + code + ": " + text);
-                setError(CallError.SIGNALING);
-            }
-        }
-
-        @Override
-        public void onJoin(String room, String role) {
-            if (!"observer".equals(role) || mState.ordinal() < CallState.WAITING_FOR_OBSERVER.ordinal())
-                return;
-
-            setState(CallState.WAITING_FOR_HEADSET);
-            disconnect(CallState.WAITING_FOR_OBSERVER);
-            IristickApp.registerConnectionListener(mIristickConnection, mHandler);
-        }
-
-        @Override
-        public void onLeave(String room, String role) {
-            if (mState.ordinal() > CallState.WAITING_FOR_OBSERVER.ordinal()) {
-                setState(CallState.WAITING_FOR_OBSERVER);
-                disconnect(CallState.WAITING_FOR_OBSERVER);
-            }
-        }
-
-        @Override
-        public void onReset() {
-            if (mState.ordinal() >= CallState.ESTABLISHING.ordinal()) {
-                setState(CallState.ESTABLISHING);
-                createPeerConnection();
-            }
-        }
-
-        @Override
-        public void onAnswer(SessionDescription answer) {
-            if (mPC != null)
-                mPC.setRemoteDescription(mSdpObserver, answer);
-        }
-
-        @Override
-        public void onIceCandidate(IceCandidate candidate) {
-            if (mPC != null)
-                mPC.addIceCandidate(candidate);
-        }
-    };
-
-    private void createPeerConnection() {
-        disconnect(CallState.ESTABLISHING);
-
-        /* Create PeerConnection factory */
-        PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-        options.networkIgnoreMask = 16; // ADAPTER_TYPE_LOOPBACK
-        options.disableNetworkMonitor = true;
-        mFactory = PeerConnectionFactory.builder()
-            .setOptions(options)
-            .setVideoEncoderFactory(new DefaultVideoEncoderFactory(mEglBase.getEglBaseContext(), false, false))
-            .setVideoDecoderFactory(new DefaultVideoDecoderFactory(mEglBase.getEglBaseContext()))
-            .createPeerConnectionFactory();
-
-        /* Set up video source */
-        mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mEglBase.getEglBaseContext());
-        mVideoSrc = mFactory.createVideoSource(false);
-        mVideoCap = new IristickCapturer(mHeadset, mCameraCallback);
-        mVideoCap.initialize(mSurfaceTextureHelper, this, mVideoSrc.getCapturerObserver());
-        switch (mPreferences.getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL")) {
-        case "LOW":
-            mVideoCap.startCapture(320, 240, 30);
-            break;
-        case "HD":
-            mVideoCap.startCapture(1280, 720, 30);
-            break;
-        default:
-            mVideoCap.startCapture(640, 480, 30);
-        }
-        try {
-            mVideoCap.setLaser(LaserMode.valueOf(mPreferences.getString(SettingsActivity.KEY_LASER_MODE, LaserMode.AUTO.name())));
-        } catch (IllegalArgumentException e) {
-            // ignore bad preference value
-        }
-        mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
-        mVideoTrack.setEnabled(true);
-
-        /* Set up audio source */
-        mAudioSrc = mFactory.createAudioSource(new MediaConstraints());
-        mAudioTrack = mFactory.createAudioTrack("Wizzeye_a0", mAudioSrc);
-        mAudioTrack.setEnabled(true);
-
-        /* Create PeerConnection */
-        PeerConnection.RTCConfiguration config = new PeerConnection.RTCConfiguration(getIceServers());
-        mPC = mFactory.createPeerConnection(config, mPCObserver);
-
-        /* Create local media stream */
-        MediaStream localStream = mFactory.createLocalMediaStream("Wizzeye");
-        localStream.addTrack(mVideoTrack);
-        localStream.addTrack(mAudioTrack);
-        mPC.addStream(localStream);
-
-        /* Create offer */
-        MediaConstraints sdpcstr = new MediaConstraints();
-        sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
-        sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
-        mPC.createOffer(mSdpObserver, sdpcstr);
-    }
-
-    private final PeerConnection.Observer mPCObserver = new PeerConnection.Observer() {
-        @Override
-        public void onSignalingChange(PeerConnection.SignalingState signalingState) {
-        }
-
-        @Override
-        public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-            switch (iceConnectionState) {
-            case CONNECTED:
-                mHandler.post(() -> {
-                    if (mState == CallState.ESTABLISHING)
-                        setState(CallState.CALL_IN_PROGRESS);
-                });
-                break;
-            case FAILED:
-                mHandler.post(() -> {
-                    switch (mState) {
-                    case ESTABLISHING:
-                        setError(CallError.ICE);
-                        break;
-                    case CALL_IN_PROGRESS:
-                        setState(CallState.ESTABLISHING);
-                        createPeerConnection();
-                        break;
-                    }
-                });
-                break;
-            }
-        }
-
-        @Override
-        public void onIceConnectionReceivingChange(boolean b) {
-        }
-
-        @Override
-        public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
-        }
-
-        @Override
-        public void onIceCandidate(final IceCandidate iceCandidate) {
-            if (iceCandidate != null) {
-                Log.d(TAG, "Got ICE candidate: " + iceCandidate);
-                mHandler.post(() -> {
-                    if (mSignal != null)
-                        mSignal.iceCandidate(iceCandidate);
-                });
-            }
-        }
-
-        @Override
-        public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
-        }
-
-        @Override
-        public void onAddStream(MediaStream mediaStream) {
-        }
-
-        @Override
-        public void onRemoveStream(MediaStream mediaStream) {
-        }
-
-        @Override
-        public void onDataChannel(DataChannel dataChannel) {
-        }
-
-        @Override
-        public void onRenegotiationNeeded() {
-        }
-
-        @Override
-        public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-        }
-    };
-
-    private final SdpObserver mSdpObserver = new SdpObserver() {
-        @Override
-        public void onCreateSuccess(final SessionDescription sessionDescription) {
-            mHandler.post(() -> {
-                if (mPC != null) {
-                    Log.d(TAG, "Offer created");
-                    mPC.setLocalDescription(mSdpObserver, sessionDescription);
-                    mSignal.offer(sessionDescription, getIceServers());
-                }
-            });
-        }
-
-        @Override
-        public void onSetSuccess() {
-        }
-
-        @Override
-        public void onCreateFailure(String s) {
-            Log.e(TAG, "Failed to create offer: " + s);
-            mHandler.post(() -> {
-                if (mState.ordinal() >= CallState.ESTABLISHING.ordinal())
-                    setError(CallError.WEBRTC);
-            });
-        }
-
-        @Override
-        public void onSetFailure(String s) {
-            Log.e(TAG, "SetDescription failed: " + s);
-            mHandler.post(() -> {
-                if (mState.ordinal() >= CallState.ESTABLISHING.ordinal())
-                    setError(CallError.WEBRTC);
-            });
-        }
-    };
-
-    private final CameraVideoCapturer.CameraEventsHandler mCameraCallback = new CameraVideoCapturer.CameraEventsHandler() {
-        @Override
-        public void onCameraError(String msg) {
-            Log.e(TAG, "Camera error: " + msg);
-            mHandler.post(() -> {
-                if (mState.ordinal() >= CallState.ESTABLISHING.ordinal())
-                    setError(CallError.CAMERA);
-            });
-        }
-
-        @Override
-        public void onCameraDisconnected() {
-        }
-
-        @Override
-        public void onCameraFreezed(String s) {
-        }
-
-        @Override
-        public void onCameraOpening(String s) {
-        }
-
-        @Override
-        public void onFirstFrameAvailable() {
-        }
-
-        @Override
-        public void onCameraClosed() {
-        }
-    };
 }

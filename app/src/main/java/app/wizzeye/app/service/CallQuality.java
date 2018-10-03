@@ -18,33 +18,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package app.wizzeye.app.fragments;
+package app.wizzeye.app.service;
 
-import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.util.Size;
 
-import app.wizzeye.app.R;
-import app.wizzeye.app.service.CallError;
+public enum CallQuality {
+    LOW(320, 240, 3),
+    NORMAL(640, 480, 3),
+    HD(1280, 720, 2),
+    ;
 
-public class ErrorFragment extends InRoomFragment {
+    public final Size frameSize;
+    public final int maxZoom;
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_error, container, false);
-        TextView errorView = view.findViewById(R.id.error);
-        if (mCall != null) {
-            CallError error = mCall.getError();
-            if (error != null)
-                errorView.setText(error.message);
-        }
-        errorView.setMovementMethod(LinkMovementMethod.getInstance());
-        if (mCall != null)
-            view.findViewById(R.id.restart).setOnClickListener(v -> mCall.restart());
-        return view;
+    CallQuality(int width, int height, int maxZoom) {
+        frameSize = new Size(width, height);
+        this.maxZoom = maxZoom;
     }
-
 }

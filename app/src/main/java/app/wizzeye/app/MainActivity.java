@@ -31,10 +31,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
 
 import com.iristick.smartglass.core.Headset;
@@ -42,6 +42,7 @@ import com.iristick.smartglass.support.app.IristickApp;
 
 import app.wizzeye.app.fragments.BaseFragment;
 import app.wizzeye.app.fragments.PermissionsFragment;
+import app.wizzeye.app.service.Call;
 import app.wizzeye.app.service.CallService;
 import app.wizzeye.app.service.CallState;
 
@@ -203,10 +204,14 @@ public class MainActivity extends BaseActivity implements ServiceConnection, Cal
         } catch (InstantiationException | IllegalAccessException e) {
             Log.e(TAG, "Could not create fragment for state " + newState, e);
         }
-        if (newState == CallState.IDLE)
-            getSupportActionBar().setTitle(R.string.app_name);
-        else
-            getSupportActionBar().setTitle(getCallService().getRoomName());
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            Call call = getCallService().getCall();
+            if (call == null)
+                actionBar.setTitle(R.string.app_name);
+            else
+                actionBar.setTitle(call.getRoomName());
+        }
         getWindow().setFlags(newState == CallState.IDLE || newState == CallState.ERROR ? 0 :
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

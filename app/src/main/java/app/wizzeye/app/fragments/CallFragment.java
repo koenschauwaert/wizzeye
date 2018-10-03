@@ -21,7 +21,8 @@
 package app.wizzeye.app.fragments;
 
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
@@ -37,18 +38,21 @@ import com.iristick.smartglass.support.app.IristickApp;
 import org.webrtc.SurfaceViewRenderer;
 
 import app.wizzeye.app.R;
-import app.wizzeye.app.SettingsActivity;
+import app.wizzeye.app.service.Call;
 import app.wizzeye.app.service.LaserMode;
 
 public class CallFragment extends InRoomFragment {
 
     private static final String STATE_FOCUS_HINT_SHOWN = "focus_hint_shown";
 
+    private static final int MSG_PARAMETERS_CHANGED = 0;
+
     private SurfaceViewRenderer mVideo;
     private SeekBar mZoom;
     private FloatingActionButton mMore;
     private DrawerLayout mDrawerLayout;
     private NavigationView mOptions;
+    private Message mParametersChangedMessage;
 
     private boolean mFocusHintShown = false;
 
@@ -60,11 +64,9 @@ public class CallFragment extends InRoomFragment {
         mVideo.setEnableHardwareScaler(true);
         mVideo.setOnClickListener(v -> refocus());
 
-        String quality = PreferenceManager.getDefaultSharedPreferences(getContext())
-            .getString(SettingsActivity.KEY_VIDEO_QUALITY, "NORMAL");
         mZoom = view.findViewById(R.id.zoom);
-        mZoom.setMax(quality.equals("HD") ? 2 : 3);
-        mZoom.setProgress(mService.getZoom());
+        if (mCall != null)
+            mZoom.setMax(mCall.getQuality().maxZoom);
         mZoom.setOnSeekBarChangeListener(mZoomListener);
         mZoom.setOnClickListener(v -> refocus());
 
@@ -75,14 +77,25 @@ public class CallFragment extends InRoomFragment {
         mMore = view.findViewById(R.id.more);
         mMore.setOnClickListener(v -> mDrawerLayout.openDrawer(mOptions));
 
-        mOptions.getMenu().findItem(R.id.torch).setChecked(mService.getTorch());
-        mOptions.getMenu().findItem(R.id.laser).setChecked(mService.getLaser() != LaserMode.OFF);
-        mOptions.getMenu().findItem(R.id.laser).setIcon(mService.getLaser().icon);
+        Handler handler = new Handler(this::handleMessage);
+        mParametersChangedMessage = handler.obtainMessage(MSG_PARAMETERS_CHANGED);
+        if (mCall != null) {
+            mCall.registerMessage(Call.Event.PARAMETERS_CHANGED, mParametersChangedMessage);
+            handler.sendEmptyMessage(MSG_PARAMETERS_CHANGED);
+        }
 
         if (savedInstanceState != null)
             mFocusHintShown = savedInstanceState.getBoolean(STATE_FOCUS_HINT_SHOWN, false);
 
         return view;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mCall != null)
+            mCall.unregisterMessage(mParametersChangedMessage);
+        mParametersChangedMessage.recycle();
+        super.onDestroy();
     }
 
     @Override
@@ -94,12 +107,14 @@ public class CallFragment extends InRoomFragment {
     @Override
     public void onStart() {
         super.onStart();
-        mService.addVideoSink(mVideo);
+        if (mCall != null)
+            mCall.addVideoSink(mVideo);
     }
 
     @Override
     public void onStop() {
-        mService.removeVideoSink(mVideo);
+        if (mCall != null)
+            mCall.removeVideoSink(mVideo);
         mVideo.release();
         super.onStop();
     }
@@ -114,21 +129,39 @@ public class CallFragment extends InRoomFragment {
     }
 
     private void refocus() {
-        if (mService.getZoom() >= mZoom.getMax())
+        if (mCall == null)
+            return;
+        if (mCall.getZoom() >= mZoom.getMax())
             Toast.makeText(getContext(), R.string.call_toast_focus_forbidden, Toast.LENGTH_SHORT).show();
         else
-            mService.triggerAF();
+            mCall.triggerAF();
+    }
+
+    private boolean handleMessage(Message msg) {
+        if (mCall == null)
+            return false;
+        switch (msg.what) {
+        case MSG_PARAMETERS_CHANGED:
+            mZoom.setProgress(mCall.getZoom());
+            mOptions.getMenu().findItem(R.id.torch).setChecked(mCall.getTorch());
+            mOptions.getMenu().findItem(R.id.laser).setChecked(mCall.getLaser() != LaserMode.OFF);
+            mOptions.getMenu().findItem(R.id.laser).setIcon(mCall.getLaser().icon);
+            return true;
+        }
+        return false;
     }
 
     private final SeekBar.OnSeekBarChangeListener mZoomListener = new SeekBar.OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            if (!fromUser || mCall == null)
+                return;
             if (IristickApp.getInteractionMode() == Headset.INTERACTION_MODE_HUD &&
                 !mFocusHintShown && progress > 0) {
                 Toast.makeText(getContext(), R.string.call_hint_focus, Toast.LENGTH_LONG).show();
                 mFocusHintShown = true;
             }
-            mService.setZoom(progress);
+            mCall.setZoom(progress);
         }
 
         @Override
@@ -153,24 +186,23 @@ public class CallFragment extends InRoomFragment {
     };
 
     private final NavigationView.OnNavigationItemSelectedListener mOptionsListener = item -> {
+        if (mCall == null)
+            return false;
         switch (item.getItemId()) {
         case R.id.torch:
-            boolean newTorch = !mService.getTorch();
-            mService.setTorch(newTorch);
-            item.setChecked(newTorch);
+            boolean newTorch = !mCall.getTorch();
+            mCall.setTorch(newTorch);
             break;
         case R.id.laser:
-            LaserMode newLaser = mService.getLaser().next();
-            mService.setLaser(newLaser);
-            item.setChecked(newLaser != LaserMode.OFF);
-            item.setIcon(newLaser.icon);
+            LaserMode newLaser = mCall.getLaser().next();
+            mCall.setLaser(newLaser);
             break;
         case R.id.take_picture:
-            mService.takePicture();
+            mCall.takePicture();
             mDrawerLayout.closeDrawers();
             break;
         case R.id.hangup:
-            mService.hangup();
+            mCall.stop();
             mDrawerLayout.closeDrawers();
             break;
         }

@@ -36,7 +36,7 @@ public class ConnectingFragment extends InRoomFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_connecting, container, false);
-        CallState state = mService.getState();
+        CallState state = mCall != null ? mCall.getState() : CallState.IDLE;
         ((TextView) view.findViewById(R.id.status)).setText(state.title);
         TextView hint = view.findViewById(R.id.hint);
         if (state.hint != 0) {
@@ -44,7 +44,7 @@ public class ConnectingFragment extends InRoomFragment {
             case WAITING_FOR_OBSERVER:
                 hint.setText(getString(state.hint,
                     PreferenceManager.getDefaultSharedPreferences(getContext()).getString(SettingsActivity.KEY_SERVER, ""),
-                    mService.getRoomName()));
+                    mCall.getRoomName()));
                 break;
             default:
                 hint.setText(state.hint);
