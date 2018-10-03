@@ -76,6 +76,7 @@ public class Call {
     public enum Event {
         STATE_CHANGED,              // arg1 = (CallState) newState
         PARAMETERS_CHANGED,         // empty
+        TURBULENCE,                 // arg1 = (boolean) turbulence
     }
 
     private static final String TAG = "Call";
@@ -152,6 +153,14 @@ public class Call {
     private synchronized void fireParametersChanged() {
         for (Message msg : mMessages[Event.PARAMETERS_CHANGED.ordinal()])
             Message.obtain(msg).sendToTarget();
+    }
+
+    private synchronized void fireTurbulence(boolean turbulence) {
+        for (Message msg : mMessages[Event.TURBULENCE.ordinal()]) {
+            Message copy = Message.obtain(msg);
+            copy.arg1 = turbulence ? 1 : 0;
+            copy.sendToTarget();
+        }
     }
 
     public synchronized void registerMessage(@NonNull Event event, @NonNull Message msg) {
@@ -287,6 +296,7 @@ public class Call {
         HEADSET_DISCONNECTED,       // empty
         IRISTICK_ERROR,             // arg1 = error
         PC_ICE_CONNECTED,           // empty
+        PC_ICE_DISCONNECTED,        // empty
         PC_ICE_FAILED,              // empty
         PC_ICE_CANDIDATE,           // obj = (IceCandidate)
         SDP_CREATE_SUCCESS,         // obj = (SessionDescription)
@@ -486,6 +496,12 @@ public class Call {
                 return true;
             case PC_ICE_CANDIDATE:
                 mSignal.iceCandidate((IceCandidate) msg.obj);
+                return true;
+            case PC_ICE_CONNECTED:
+                fireTurbulence(false);
+                return true;
+            case PC_ICE_DISCONNECTED:
+                fireTurbulence(true);
                 return true;
             case PC_ICE_FAILED:
                 gotoState(CallState.ESTABLISHING);
@@ -810,6 +826,9 @@ public class Call {
                 break;
             case FAILED:
                 sendMessage(What.PC_ICE_FAILED, 0, 0, null);
+                break;
+            case DISCONNECTED:
+                sendMessage(What.PC_ICE_DISCONNECTED, 0, 0, null);
                 break;
             }
         }
