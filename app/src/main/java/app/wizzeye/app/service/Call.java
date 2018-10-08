@@ -37,8 +37,6 @@ import android.util.Log;
 import com.iristick.smartglass.core.Headset;
 import com.iristick.smartglass.core.IristickConnection;
 import com.iristick.smartglass.support.app.IristickApp;
-import com.koushikdutta.async.http.AsyncHttpClient;
-import com.koushikdutta.async.http.WebSocket;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,9 +62,12 @@ import org.webrtc.VideoTrack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 import app.wizzeye.app.SettingsActivity;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class Call {
 
@@ -256,8 +257,6 @@ public class Call {
 
     // Internal variable only used on this thread
     private NetworkMonitor mNetworkMonitor;
-    private Future<WebSocket> mFutureSocket;
-    private WebSocketCallback mWebSocketCallback;
     private SignalingProtocol mSignal;
     private IristickCallback mIristickCallback;
     private Headset mHeadset;
@@ -278,9 +277,8 @@ public class Call {
         RESTART,                    // empty
         NETWORK_AVAILABLE,          // empty
         NETWORK_LOST,               // empty
-        WEBSOCKET_CONNECTED,        // obj = (WebSocket)
-        WEBSOCKET_FAILED,           // obj = (Exception)
-        SIGNALING_DISCONNECTED,     // empty
+        WEBSOCKET_CONNECTED,        // empty
+        WEBSOCKET_CLOSED,           // empty
         SIGNALING_ERROR,            // arg1 = code, obj = (String) text
         SIGNALING_OBSERVER_JOINED,  // empty
         SIGNALING_LEAVE,            // empty
@@ -349,10 +347,9 @@ public class Call {
         case CONNECTING_TO_SERVER:
             switch (what) {
             case WEBSOCKET_CONNECTED:
-                mSignal = new SignalingProtocol((WebSocket) msg.obj);
                 gotoState(CallState.WAITING_FOR_OBSERVER);
                 return true;
-            case WEBSOCKET_FAILED:
+            case WEBSOCKET_CLOSED:
                 gotoError(CallError.SERVER_UNREACHABLE);
                 return true;
             case NETWORK_LOST:
@@ -368,11 +365,11 @@ public class Call {
             case SIGNALING_OBSERVER_JOINED:
                 gotoState(CallState.WAITING_FOR_HEADSET);
                 return true;
-            case SIGNALING_DISCONNECTED:
-                gotoState(CallState.CONNECTING_TO_SERVER);
-                return true;
             case SIGNALING_ERROR:
                 handleSignalingError(msg);
+                return true;
+            case WEBSOCKET_CLOSED:
+                gotoState(CallState.CONNECTING_TO_SERVER);
                 return true;
             case NETWORK_LOST:
                 gotoState(CallState.WAITING_FOR_NETWORK);
@@ -406,11 +403,11 @@ public class Call {
             case SIGNALING_LEAVE:
                 gotoState(CallState.WAITING_FOR_OBSERVER);
                 return true;
-            case SIGNALING_DISCONNECTED:
-                gotoState(CallState.CONNECTING_TO_SERVER);
-                return true;
             case SIGNALING_ERROR:
                 handleSignalingError(msg);
+                return true;
+            case WEBSOCKET_CLOSED:
+                gotoState(CallState.CONNECTING_TO_SERVER);
                 return true;
             case NETWORK_LOST:
                 gotoState(CallState.WAITING_FOR_NETWORK);
@@ -458,11 +455,11 @@ public class Call {
             case SIGNALING_LEAVE:
                 gotoState(CallState.WAITING_FOR_OBSERVER);
                 return true;
-            case SIGNALING_DISCONNECTED:
-                gotoState(CallState.CONNECTING_TO_SERVER);
-                return true;
             case SIGNALING_ERROR:
                 handleSignalingError(msg);
+                return true;
+            case WEBSOCKET_CLOSED:
+                gotoState(CallState.CONNECTING_TO_SERVER);
                 return true;
             case NETWORK_LOST:
                 gotoState(CallState.WAITING_FOR_NETWORK);
@@ -513,11 +510,11 @@ public class Call {
             case SIGNALING_LEAVE:
                 gotoState(CallState.WAITING_FOR_OBSERVER);
                 return true;
-            case SIGNALING_DISCONNECTED:
-                gotoState(CallState.CONNECTING_TO_SERVER);
-                return true;
             case SIGNALING_ERROR:
                 handleSignalingError(msg);
+                return true;
+            case WEBSOCKET_CLOSED:
+                gotoState(CallState.CONNECTING_TO_SERVER);
                 return true;
             case NETWORK_LOST:
                 gotoState(CallState.WAITING_FOR_NETWORK);
@@ -609,23 +606,16 @@ public class Call {
             if (newState.ordinal() > CallState.CONNECTING_TO_SERVER.ordinal())
                 break;
             Log.v(TAG, "Closing websocket connection");
-            if (mSignal != null) {
-                mSignal.leave();
-                mSignal.close();
-                mSignal = null;
-            }
-            mWebSocketCallback.alive = false;
-            mWebSocketCallback = null;
-            mFutureSocket.cancel(true);
-            mFutureSocket = null;
+            mSignal.leave();
+            mSignal.close();
+            mSignal = null;
             removeMessages(What.SIGNALING_ICE_CANDIDATE);
             removeMessages(What.SIGNALING_ANSWER);
             removeMessages(What.SIGNALING_RESET);
             removeMessages(What.SIGNALING_LEAVE);
             removeMessages(What.SIGNALING_OBSERVER_JOINED);
             removeMessages(What.SIGNALING_ERROR);
-            removeMessages(What.SIGNALING_DISCONNECTED);
-            removeMessages(What.WEBSOCKET_FAILED);
+            removeMessages(What.WEBSOCKET_CLOSED);
             removeMessages(What.WEBSOCKET_CONNECTED);
         case WAITING_FOR_NETWORK:
             if (newState.ordinal() > CallState.WAITING_FOR_NETWORK.ordinal())
@@ -651,10 +641,7 @@ public class Call {
 
         case CONNECTING_TO_SERVER:
             Log.v(TAG, "Connecting to websocket");
-            mWebSocketCallback = new WebSocketCallback();
-            mFutureSocket = AsyncHttpClient.getDefaultInstance().websocket(
-                mUri.buildUpon().path("/ws").build().toString(),
-                SignalingProtocol.VERSION, mWebSocketCallback);
+            mSignal = new SignalingProtocol(mUri.buildUpon().path("/ws").build().toString());
             break;
 
         case WAITING_FOR_OBSERVER:
@@ -768,19 +755,6 @@ public class Call {
         public void onLost(Network network) {
             if (alive)
                 sendMessage(What.NETWORK_LOST, 0, 0, null, 0);
-        }
-    }
-
-    private class WebSocketCallback implements AsyncHttpClient.WebSocketConnectCallback {
-        volatile boolean alive = true;
-        @Override
-        public void onCompleted(Exception ex, WebSocket webSocket) {
-            if (!alive)
-                return;
-            if (ex == null)
-                sendMessage(What.WEBSOCKET_CONNECTED, 0, 0, webSocket, 0);
-            else
-                sendMessage(What.WEBSOCKET_FAILED, 0, 0, ex, 0);
         }
     }
 
@@ -909,7 +883,7 @@ public class Call {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Signaling protocol
 
-    private class SignalingProtocol {
+    private class SignalingProtocol extends WebSocketListener {
         static final String VERSION = "v1.signaling.wizzeye.app";
 
         @SuppressWarnings("unused") static final int ERROR_UNKNOWN = 1;
@@ -918,33 +892,55 @@ public class Call {
         @SuppressWarnings("unused") static final int ERROR_ROLE_TAKEN = 4;
         @SuppressWarnings("unused") static final int ERROR_BAD_ROOM = 5;
 
+        private static final int WEBSOCKET_CLOSE_GOING_AWAY = 1001;
+
         private final WebSocket mSocket;
         private volatile boolean mClosed = false;
 
-        SignalingProtocol(WebSocket socket) {
-            mSocket = socket;
-            socket.setClosedCallback(this::onClosed);
-            socket.setStringCallback(this::onMessage);
+        SignalingProtocol(String uri) {
+            Request request = new Request.Builder()
+                .url(uri)
+                .header("Sec-WebSocket-Protocol", VERSION)
+                .build();
+            mSocket = mService.mHttpClient.newWebSocket(request, this);
         }
 
         void close() {
             mClosed = true;
-            mSocket.close();
+            mSocket.close(WEBSOCKET_CLOSE_GOING_AWAY, null);
         }
 
-        private void onClosed(Exception ex) {
+        @Override
+        public void onOpen(WebSocket webSocket, Response response) {
             if (mClosed)
                 return;
-            Log.d(TAG, "Socket closed: " + ex.getMessage());
-            sendMessage(What.SIGNALING_DISCONNECTED, 0, 0, null, 0);
+            sendMessage(What.WEBSOCKET_CONNECTED, 0, 0, null, 0);
         }
 
-        private void onMessage(String s) {
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
+            if (mClosed)
+                return;
+            Log.e(TAG, "Websocket failure", t);
+            sendMessage(What.WEBSOCKET_CLOSED, 0, 0, null, 0);
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            if (mClosed)
+                return;
+            Log.d(TAG, "Websocket closing, code: " + code + ", reason: " + reason);
+            mSocket.close(code, null);
+            sendMessage(What.WEBSOCKET_CLOSED, 0, 0, null, 0);
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
             if (mClosed)
                 return;
             try {
-                Log.d(TAG, ">> " + s);
-                JSONObject msg = new JSONObject(s);
+                Log.d(TAG, ">> " + text);
+                JSONObject msg = new JSONObject(text);
                 String type = msg.getString("type");
                 switch (type) {
                 case "error":

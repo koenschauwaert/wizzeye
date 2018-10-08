@@ -82,5 +82,5 @@ dependencies {
     implementation 'com.iristick.smartglass:core:0.7'
     implementation 'com.iristick.smartglass:support:0.7'
     implementation 'org.webrtc:google-webrtc:1.0.24616'
-    implementation 'com.koushikdutta.async:androidasync:2.2.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.11.0'
 }

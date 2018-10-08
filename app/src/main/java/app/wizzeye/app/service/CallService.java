@@ -48,6 +48,7 @@ import java.util.List;
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
+import okhttp3.OkHttpClient;
 
 public class CallService extends Service {
 
@@ -73,6 +74,7 @@ public class CallService extends Service {
 
     private SharedPreferences mPreferences;
     private NotificationManager mNotificationManager;
+    OkHttpClient mHttpClient;
     EglBase mEglBase;
 
     private Call mCall;
@@ -85,6 +87,9 @@ public class CallService extends Service {
         mNotificationManager = getSystemService(NotificationManager.class);
         Handler handler = new Handler(this::handleMessage);
         mCallStateMessage = handler.obtainMessage(MSG_CALL_STATE_CHANGED);
+
+        mHttpClient = new OkHttpClient.Builder()
+            .build();
 
         mEglBase = EglBase.create();
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions
