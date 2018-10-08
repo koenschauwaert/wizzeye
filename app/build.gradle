@@ -37,7 +37,7 @@ android {
             hostName: props.hostName,
         ]
         resValue('string', "default_server", "${props.hostScheme}://${props.hostName}")
-        buildConfigField("String", "STUN_SERVER", "\"${props.stunServer}\"")
+        resValue('string', "default_stun_hostname", "${props.stunServer}")
     }
     compileOptions {
         targetCompatibility 1.8

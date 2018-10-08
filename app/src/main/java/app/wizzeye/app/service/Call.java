@@ -68,7 +68,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import app.wizzeye.app.BuildConfig;
 import app.wizzeye.app.SettingsActivity;
 
 public class Call {
@@ -738,9 +737,10 @@ public class Call {
     private List<PeerConnection.IceServer> buildIceServers() {
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
 
-        // Add default STUN server
-        iceServers.add(PeerConnection.IceServer.builder("stun:" + BuildConfig.STUN_SERVER)
-            .createIceServer());
+        String stunHost = mPreferences.getString(SettingsActivity.KEY_STUN_HOSTNAME, "");
+        if (!stunHost.isEmpty())
+            iceServers.add(PeerConnection.IceServer.builder("stun:" + stunHost)
+                .createIceServer());
 
         String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
         if (!turnHost.isEmpty()) {

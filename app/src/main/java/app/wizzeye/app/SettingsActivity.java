@@ -41,6 +41,7 @@ public class SettingsActivity extends BaseActivity {
 
     public static final String KEY_VIDEO_QUALITY = "video_quality";
     public static final String KEY_SERVER = "server";
+    public static final String KEY_STUN_HOSTNAME = "stun_hostname";
     public static final String KEY_TURN_HOSTNAME = "turn_hostname";
     public static final String KEY_TURN_USERNAME = "turn_username";
     public static final String KEY_TURN_PASSWORD = "turn_password";
@@ -91,6 +92,7 @@ public class SettingsActivity extends BaseActivity {
             prefs.registerOnSharedPreferenceChangeListener(this);
             onSharedPreferenceChanged(prefs, KEY_VIDEO_QUALITY);
             onSharedPreferenceChanged(prefs, KEY_SERVER);
+            onSharedPreferenceChanged(prefs, KEY_STUN_HOSTNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_HOSTNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_USERNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_PASSWORD);
@@ -104,6 +106,7 @@ public class SettingsActivity extends BaseActivity {
                 pref.setSummary(((ListPreference) pref).getEntry());
                 break;
             case KEY_SERVER:
+            case KEY_STUN_HOSTNAME:
             case KEY_TURN_HOSTNAME:
             case KEY_TURN_USERNAME:
                 pref.setSummary(prefs.getString(key, ""));

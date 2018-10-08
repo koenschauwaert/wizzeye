@@ -20,6 +20,11 @@
             android:defaultValue="@string/default_server" />
 
         <EditTextPreference
+            android:key="stun_hostname"
+            android:title="@string/pref_stun_hostname"
+            android:defaultValue="@string/default_stun_hostname" />
+
+        <EditTextPreference
             android:key="turn_hostname"
             android:title="@string/pref_turn_hostname" />
 
