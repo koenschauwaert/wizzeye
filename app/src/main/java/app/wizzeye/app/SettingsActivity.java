@@ -93,6 +93,7 @@ public class SettingsActivity extends BaseActivity {
             onSharedPreferenceChanged(prefs, KEY_SERVER);
             onSharedPreferenceChanged(prefs, KEY_TURN_HOSTNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_USERNAME);
+            onSharedPreferenceChanged(prefs, KEY_TURN_PASSWORD);
         }
 
         @Override
@@ -106,6 +107,9 @@ public class SettingsActivity extends BaseActivity {
             case KEY_TURN_HOSTNAME:
             case KEY_TURN_USERNAME:
                 pref.setSummary(prefs.getString(key, ""));
+                break;
+            case KEY_TURN_PASSWORD:
+                pref.setSummary(prefs.getString(key, "").isEmpty() ? "" : "•••••");
                 break;
             }
         }
