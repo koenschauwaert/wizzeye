@@ -136,7 +136,7 @@ public class Call {
     }
 
     void dispose() {
-        sendMessage(What.STOP, 0, 0, null);
+        sendMessage(What.STOP, 0, 0, null, 0);
         mThread.quitSafely();
     }
 
@@ -197,31 +197,31 @@ public class Call {
     }
 
     void start() {
-        sendMessage(What.START, 0, 0, null);
+        sendMessage(What.START, 0, 0, null, 0);
     }
 
     public void stop() {
-        sendMessage(What.STOP, 0, 0, null);
+        sendMessage(What.STOP, 0, 0, null, 0);
     }
 
     public void restart() {
-        sendMessage(What.RESTART, 0, 0, null);
+        sendMessage(What.RESTART, 0, 0, null, 0);
     }
 
     public void addVideoSink(VideoSink sink) {
-        sendMessage(What.ADD_VIDEO_SINK, 0, 0, sink);
+        sendMessage(What.ADD_VIDEO_SINK, 0, 0, sink, 0);
     }
 
     public void removeVideoSink(VideoSink sink) {
-        sendMessage(What.REMOVE_VIDEO_SINK, 0, 0, sink);
+        sendMessage(What.REMOVE_VIDEO_SINK, 0, 0, sink, 0);
     }
 
     public void triggerAF() {
-        sendMessage(What.TRIGGER_AF, 0, 0, null);
+        sendMessage(What.TRIGGER_AF, 0, 0, null, 0);
     }
 
     public void takePicture() {
-        sendMessage(What.TAKE_PICTURE, 0, 0, null);
+        sendMessage(What.TAKE_PICTURE, 0, 0, null, 0);
     }
 
     public int getZoom() {
@@ -309,8 +309,8 @@ public class Call {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void sendMessage(What what, int arg1, int arg2, Object obj) {
-        mHandler.sendMessage(mHandler.obtainMessage(what.ordinal(), arg1, arg2, obj));
+    private void sendMessage(What what, int arg1, int arg2, Object obj, long delayMs) {
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(what.ordinal(), arg1, arg2, obj), delayMs);
     }
 
     private void removeMessages(What what) {
@@ -766,12 +766,12 @@ public class Call {
         @Override
         public void onAvailable(Network network) {
             if (alive)
-                sendMessage(What.NETWORK_AVAILABLE, 0, 0, null);
+                sendMessage(What.NETWORK_AVAILABLE, 0, 0, null, 0);
         }
         @Override
         public void onLost(Network network) {
             if (alive)
-                sendMessage(What.NETWORK_LOST, 0, 0, null);
+                sendMessage(What.NETWORK_LOST, 0, 0, null, 0);
         }
     }
 
@@ -782,9 +782,9 @@ public class Call {
             if (!alive)
                 return;
             if (ex == null)
-                sendMessage(What.WEBSOCKET_CONNECTED, 0, 0, webSocket);
+                sendMessage(What.WEBSOCKET_CONNECTED, 0, 0, webSocket, 0);
             else
-                sendMessage(What.WEBSOCKET_FAILED, 0, 0, ex);
+                sendMessage(What.WEBSOCKET_FAILED, 0, 0, ex, 0);
         }
     }
 
@@ -793,12 +793,12 @@ public class Call {
         @Override
         public void onHeadsetConnected(Headset headset) {
             if (alive)
-                sendMessage(What.HEADSET_CONNECTED, 0, 0, headset);
+                sendMessage(What.HEADSET_CONNECTED, 0, 0, headset, 0);
         }
         @Override
         public void onHeadsetDisconnected(Headset headset) {
             if (alive)
-                sendMessage(What.HEADSET_DISCONNECTED, 0, 0, null);
+                sendMessage(What.HEADSET_DISCONNECTED, 0, 0, null, 0);
         }
         @Override
         public void onIristickServiceInitialized() {
@@ -806,7 +806,7 @@ public class Call {
         @Override
         public void onIristickServiceError(int error) {
             if (alive)
-                sendMessage(What.IRISTICK_ERROR, error, 0, null);
+                sendMessage(What.IRISTICK_ERROR, error, 0, null, 0);
         }
     }
 
@@ -822,13 +822,13 @@ public class Call {
                 return;
             switch (iceConnectionState) {
             case CONNECTED:
-                sendMessage(What.PC_ICE_CONNECTED, 0, 0, null);
+                sendMessage(What.PC_ICE_CONNECTED, 0, 0, null, 0);
                 break;
             case FAILED:
-                sendMessage(What.PC_ICE_FAILED, 0, 0, null);
+                sendMessage(What.PC_ICE_FAILED, 0, 0, null, 0);
                 break;
             case DISCONNECTED:
-                sendMessage(What.PC_ICE_DISCONNECTED, 0, 0, null);
+                sendMessage(What.PC_ICE_DISCONNECTED, 0, 0, null, 0);
                 break;
             }
         }
@@ -842,7 +842,7 @@ public class Call {
         public void onIceCandidate(IceCandidate iceCandidate) {
             if (alive && iceCandidate != null) {
                 Log.d(TAG, "Got ICE candidate: " + iceCandidate);
-                sendMessage(What.PC_ICE_CANDIDATE, 0, 0, iceCandidate);
+                sendMessage(What.PC_ICE_CANDIDATE, 0, 0, iceCandidate, 0);
             }
         }
         @Override
@@ -866,7 +866,7 @@ public class Call {
         @Override
         public void onCreateSuccess(SessionDescription sessionDescription) {
             if (alive)
-                sendMessage(What.SDP_CREATE_SUCCESS, 0, 0, sessionDescription);
+                sendMessage(What.SDP_CREATE_SUCCESS, 0, 0, sessionDescription, 0);
         }
         @Override
         public void onSetSuccess() {
@@ -875,21 +875,21 @@ public class Call {
         public void onCreateFailure(String s) {
             if (alive) {
                 Log.e(TAG, "Failed to create offer: " + s);
-                sendMessage(What.SDP_CREATE_FAILURE, 0, 0, null);
+                sendMessage(What.SDP_CREATE_FAILURE, 0, 0, null, 0);
             }
         }
         @Override
         public void onSetFailure(String s) {
             if (alive) {
                 Log.e(TAG, "SetDescription failed: " + s);
-                sendMessage(What.SDP_SET_FAILURE, 0, 0, null);
+                sendMessage(What.SDP_SET_FAILURE, 0, 0, null, 0);
             }
         }
         @Override
         public void onCameraError(String msg) {
             if (alive) {
                 Log.e(TAG, "Camera error: " + msg);
-                sendMessage(What.CAMERA_ERROR, 0, 0, null);
+                sendMessage(What.CAMERA_ERROR, 0, 0, null, 0);
             }
         }
         @Override
@@ -940,7 +940,7 @@ public class Call {
             if (mClosed)
                 return;
             Log.d(TAG, "Socket closed: " + ex.getMessage());
-            sendMessage(What.SIGNALING_DISCONNECTED, 0, 0, null);
+            sendMessage(What.SIGNALING_DISCONNECTED, 0, 0, null, 0);
         }
 
         private void onMessage(String s) {
@@ -952,22 +952,22 @@ public class Call {
                 String type = msg.getString("type");
                 switch (type) {
                 case "error":
-                    sendMessage(What.SIGNALING_ERROR, msg.getInt("code"), 0, msg.getString("text"));
+                    sendMessage(What.SIGNALING_ERROR, msg.getInt("code"), 0, msg.getString("text"), 0);
                     break;
                 case "join":
                     if ("observer".equals(msg.getString("role")))
-                        sendMessage(What.SIGNALING_OBSERVER_JOINED, 0, 0, null);
+                        sendMessage(What.SIGNALING_OBSERVER_JOINED, 0, 0, null, 0);
                     break;
                 case "leave":
-                    sendMessage(What.SIGNALING_LEAVE, 0, 0, null);
+                    sendMessage(What.SIGNALING_LEAVE, 0, 0, null, 0);
                     break;
                 case "reset":
-                    sendMessage(What.SIGNALING_RESET, 0, 0, null);
+                    sendMessage(What.SIGNALING_RESET, 0, 0, null, 0);
                     break;
                 case "answer":
                     sendMessage(What.SIGNALING_ANSWER, 0, 0,
                         new SessionDescription(SessionDescription.Type.ANSWER,
-                            msg.getJSONObject("payload").getString("sdp")));
+                            msg.getJSONObject("payload").getString("sdp")), 0);
                     break;
                 case "ice-candidate":
                     JSONObject c = msg.getJSONObject("payload");
@@ -975,7 +975,7 @@ public class Call {
                             c.getString("sdpMid"),
                             c.getInt("sdpMLineIndex"),
                             c.getString("candidate")
-                    ));
+                    ), 0);
                     break;
                 default:
                     Log.w(TAG, "Got unknown message of type " + type);
