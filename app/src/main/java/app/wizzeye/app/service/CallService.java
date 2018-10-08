@@ -44,7 +44,9 @@ import org.webrtc.voiceengine.WebRtcAudioManager;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import app.wizzeye.app.BuildConfig;
 import app.wizzeye.app.MainActivity;
 import app.wizzeye.app.R;
 import app.wizzeye.app.SettingsActivity;
@@ -89,6 +91,7 @@ public class CallService extends Service {
         mCallStateMessage = handler.obtainMessage(MSG_CALL_STATE_CHANGED);
 
         mHttpClient = new OkHttpClient.Builder()
+            .pingInterval(BuildConfig.PING_INTERVAL, TimeUnit.SECONDS)
             .build();
 
         mEglBase = EglBase.create();

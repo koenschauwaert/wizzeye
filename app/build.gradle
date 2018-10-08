@@ -38,6 +38,7 @@ android {
         ]
         resValue('string', "default_server", "${props.hostScheme}://${props.hostName}")
         resValue('string', "default_stun_hostname", "${props.stunServer}")
+        buildConfigField('int', "PING_INTERVAL", "${props.pingInterval}")
     }
     compileOptions {
         targetCompatibility 1.8
