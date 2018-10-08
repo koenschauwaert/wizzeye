@@ -62,6 +62,14 @@ let UI = {
 
   showVideo: function() {
     this.show("#remote");
+  },
+
+  showTurbulence: function() {
+    $("#notice-turbulence").show();
+  },
+
+  hideTurbulence: function() {
+    $("#notice-turbulence").hide();
   }
 };
 
@@ -120,6 +128,7 @@ function setState(newState, error, errorText) {
   case State.ERROR:
     console.error(error);
     UI.showError(error);
+    UI.hideTurbulence();
     break;
   case State.CALL_IN_PROGRESS:
     console.info("Showing video");
@@ -128,6 +137,7 @@ function setState(newState, error, errorText) {
   default:
     console.info(STATUS_MESSAGES[state]);
     UI.showStatus(STATUS_MESSAGES[state], STATUS_HINTS[state]);
+    UI.hideTurbulence();
   }
 }
 
@@ -212,6 +222,9 @@ let RTC = {
       case "connected":
         ev.onIceConnected();
         break;
+      case "disconnected":
+        ev.onIceDisconnected();
+        break;
       case "failed":
         ev.onIceFailed();
         break;
@@ -285,8 +298,13 @@ ws.onopen = function() {
 
 let rtcEvents = {
   onIceConnected: function() {
+    UI.hideTurbulence();
     if (state == State.ESTABLISHING)
       setState(State.CALL_IN_PROGRESS);
+  },
+
+  onIceDisconnected: function() {
+    UI.showTurbulence();
   },
 
   onIceFailed: function() {
