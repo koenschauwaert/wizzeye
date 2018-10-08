@@ -20,7 +20,6 @@
  */
 package app.wizzeye.app.service;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -50,7 +49,6 @@ import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
-import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
@@ -80,8 +78,7 @@ public class Call {
 
     private static final String TAG = "Call";
 
-    private final Context mContext;
-    private final EglBase mEglBase;
+    private final CallService mService;
     private final Uri mUri;
     private final SharedPreferences mPreferences;
     private final ConnectivityManager mConnectivityManager;
@@ -99,12 +96,11 @@ public class Call {
     private volatile boolean mTorch = false;
     private volatile LaserMode mLaser = LaserMode.AUTO;
 
-    Call(@NonNull Context context, @NonNull EglBase eglBase, @NonNull Uri uri) {
-        mContext = context;
-        mEglBase = eglBase;
+    Call(@NonNull CallService service, @NonNull Uri uri) {
+        mService = service;
         mUri = uri;
-        mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        mConnectivityManager = context.getSystemService(ConnectivityManager.class);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(mService);
+        mConnectivityManager = mService.getSystemService(ConnectivityManager.class);
         mMainThreadHandler = new Handler();
         mThread = new HandlerThread("Call");
         mThread.start();
@@ -691,15 +687,15 @@ public class Call {
             options.disableNetworkMonitor = true;
             mFactory = PeerConnectionFactory.builder()
                 .setOptions(options)
-                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(mEglBase.getEglBaseContext(), false, false))
-                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(mEglBase.getEglBaseContext()))
+                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(mService.mEglBase.getEglBaseContext(), false, false))
+                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(mService.mEglBase.getEglBaseContext()))
                 .createPeerConnectionFactory();
 
             /* Set up video source */
-            mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mEglBase.getEglBaseContext());
+            mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mService.mEglBase.getEglBaseContext());
             mVideoSrc = mFactory.createVideoSource(false);
             mVideoCap = new IristickCapturer(this, mHeadset, mWebRtcCallback);
-            mVideoCap.initialize(mSurfaceTextureHelper, mContext, mVideoSrc.getCapturerObserver());
+            mVideoCap.initialize(mSurfaceTextureHelper, mService, mVideoSrc.getCapturerObserver());
             mVideoCap.startCapture(mQuality.frameSize.getWidth(), mQuality.frameSize.getHeight(), 30);
             mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
             mVideoTrack.setEnabled(true);

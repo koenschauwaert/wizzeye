@@ -73,7 +73,7 @@ public class CallService extends Service {
 
     private SharedPreferences mPreferences;
     private NotificationManager mNotificationManager;
-    private EglBase mEglBase;
+    EglBase mEglBase;
 
     private Call mCall;
     private Message mCallStateMessage;
@@ -161,7 +161,7 @@ public class CallService extends Service {
         }
 
         startForeground(NOTIFICATION_ID, buildNotification());
-        mCall = new Call(this, mEglBase, uri);
+        mCall = new Call(this, uri);
         mCall.registerMessage(Call.Event.STATE_CHANGED, mCallStateMessage);
         mPreferences.edit().putString(SettingsActivity.KEY_LAST_ROOM, mCall.getRoomName()).apply();
         mCall.start();
