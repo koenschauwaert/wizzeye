@@ -10,14 +10,14 @@
             android:entryValues="@array/pref_video_quality_values"
             android:defaultValue="NORMAL" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_advanced_network_category">
+
         <EditTextPreference
             android:key="server"
             android:title="@string/pref_server_title"
             android:defaultValue="@string/default_server" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="@string/pref_turn_category">
 
         <EditTextPreference
             android:key="turn_hostname"
