@@ -330,6 +330,7 @@ public class Call {
                 gotoState(CallState.IDLE);
                 return true;
             case RESTART:
+                removeMessages(What.RESTART);
                 gotoState(CallState.WAITING_FOR_NETWORK);
                 return true;
             }
@@ -626,10 +627,21 @@ public class Call {
             mNetworkMonitor = null;
             removeMessages(What.NETWORK_LOST);
             removeMessages(What.NETWORK_AVAILABLE);
+        case ERROR:
+            if (newState.ordinal() > CallState.ERROR.ordinal())
+                break;
+            removeMessages(What.RESTART);
         }
 
         // Construct one step
         switch (newState) {
+        case ERROR:
+            if (mError.retryTimeout > 0) {
+                Log.v(TAG, "Restarting in " + mError.retryTimeout + "s");
+                sendMessage(What.RESTART, 0, 0, null, mError.retryTimeout * 1000);
+            }
+            break;
+
         case WAITING_FOR_NETWORK:
             Log.v(TAG, "Starting network monitor");
             mNetworkMonitor = new NetworkMonitor();

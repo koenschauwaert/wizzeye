@@ -25,21 +25,23 @@ import android.support.annotation.StringRes;
 import app.wizzeye.app.R;
 
 public enum CallError {
-    SERVER_UNREACHABLE(R.string.error_server_unreachable),
-    SERVICES_NOT_INSTALLED(R.string.error_services_not_installed),
-    SERVICES_OUTDATED(R.string.error_services_outdated),
-    SERVICES_UNKNOWN(R.string.error_services_unknown),
-    INVALID_ROOM(R.string.error_invalid_room),
-    ROOM_BUSY(R.string.error_room_busy),
-    SIGNALING(R.string.error_signaling),
-    WEBRTC(R.string.error_webrtc),
-    ICE(R.string.error_ice),
-    CAMERA(R.string.error_camera),
+    SERVER_UNREACHABLE(R.string.error_server_unreachable, 10),
+    SERVICES_NOT_INSTALLED(R.string.error_services_not_installed, 0),
+    SERVICES_OUTDATED(R.string.error_services_outdated, 0),
+    SERVICES_UNKNOWN(R.string.error_services_unknown, 30),
+    INVALID_ROOM(R.string.error_invalid_room, 0),
+    ROOM_BUSY(R.string.error_room_busy, 0),
+    SIGNALING(R.string.error_signaling, 30),
+    WEBRTC(R.string.error_webrtc, 30),
+    ICE(R.string.error_ice, 10),
+    CAMERA(R.string.error_camera, 30),
     ;
 
     @StringRes public final int message;
+    public final int retryTimeout;
 
-    CallError(@StringRes int message) {
+    CallError(@StringRes int message, int retryTimeout) {
         this.message = message;
+        this.retryTimeout = retryTimeout;
     }
 }
