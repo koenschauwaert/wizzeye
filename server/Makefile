@@ -23,6 +23,7 @@ export GOARCH ?= $(shell go env GOARCH)
 
 ROOTPKG := wizzeye-server
 export GOPATH := $(abspath build/go)
+export CGO_ENABLED := 0
 
 .PHONY: all clean gopath godeps server
 
