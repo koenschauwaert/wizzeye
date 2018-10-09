@@ -199,6 +199,10 @@ WizzeyeSocket.prototype.send = function(msg) {
  ******************************************************************************/
 
 let RTC = {
+  onIceConnected: null,
+  onIceDisconnected: null,
+  onIceFailed: null,
+  onIceCandidate: null,
   pc: null,
 
   closePC: function() {
@@ -212,45 +216,48 @@ let RTC = {
     });
   },
 
-  _createPC: function(ev, iceServers) {
+  _createPC: function(iceServers) {
     if (iceServers === undefined)
       iceServers = [{urls: "stun:stun.l.google.com:19302"}];
     let pc = new RTCPeerConnection({iceServers: iceServers});
-    pc.oniceconnectionstatechange = function (event) {
+    pc.oniceconnectionstatechange = (event => {
       console.log("ICE connection state: " + pc.iceConnectionState);
       switch(pc.iceConnectionState) {
       case "connected":
-        ev.onIceConnected();
+        if (this.onIceConnected != null)
+          this.onIceConnected();
         break;
       case "disconnected":
-        ev.onIceDisconnected();
+        if (this.onIceDisconnected != null)
+          this.onIceDisconnected();
         break;
       case "failed":
-        ev.onIceFailed();
+        if (this.onIceFailed != null)
+          this.onIceFailed();
         break;
       }
-    }
-    pc.onicecandidate = function (event) {
-      if (event.candidate)
-        ev.onIceCandidate(event.candidate);
-    }
-    pc.onaddstream = function (event) {
+    });
+    pc.onicecandidate = (event => {
+      if (event.candidate && this.onIceCandidate != null)
+        this.onIceCandidate(event.candidate);
+    });
+    pc.onaddstream = (event => {
       $("#remote")[0].srcObject = event.stream;
-    }
+    });
     this._resolvePC(pc);
     return pc;
   },
 
-  makeOffer: function(ev, stream) {
-    let pc = this._createPC(ev);
+  makeOffer: function(stream) {
+    let pc = this._createPC();
     pc.addStream(stream);
     return pc.createOffer()
       .then(offer => pc.setLocalDescription(offer))
       .then(() => pc.localDescription);
   },
 
-  makeAnswer: function(ev, stream, offer, iceServers) {
-    let pc = this._createPC(ev, iceServers);
+  makeAnswer: function(stream, offer, iceServers) {
+    let pc = this._createPC(iceServers);
     return pc.setRemoteDescription(offer)
       .then(() => pc.addStream(stream))
       .then(() => pc.createAnswer())
@@ -296,34 +303,32 @@ ws.onopen = function() {
   ws.send({type: 'join', room: room, role: role});
 }
 
-let rtcEvents = {
-  onIceConnected: function() {
-    UI.hideTurbulence();
-    if (state == State.ESTABLISHING)
-      setState(State.CALL_IN_PROGRESS);
-  },
+RTC.onIceConnected = function() {
+  UI.hideTurbulence();
+  if (state == State.ESTABLISHING)
+    setState(State.CALL_IN_PROGRESS);
+}
 
-  onIceDisconnected: function() {
-    UI.showTurbulence();
-  },
+RTC.onIceDisconnected = function() {
+  UI.showTurbulence();
+}
 
-  onIceFailed: function() {
-    RTC.closePC();
-    switch (state) {
-    case State.ESTABLISHING:
-      die(Err.ICE);
-      break;
-    case State.CALL_IN_PROGRESS:
-      setState(State.ESTABLISHING);
-      ws.send({type: 'reset'});
-      break;
-    }
-  },
-
-  onIceCandidate: function(candidate) {
-    ws.send({type: 'ice-candidate', payload: candidate});
+RTC.onIceFailed = function() {
+  RTC.closePC();
+  switch (state) {
+  case State.ESTABLISHING:
+    die(Err.ICE);
+    break;
+  case State.CALL_IN_PROGRESS:
+    setState(State.ESTABLISHING);
+    ws.send({type: 'reset'});
+    break;
   }
-};
+}
+
+RTC.onIceCandidate = function(candidate) {
+  ws.send({type: 'ice-candidate', payload: candidate});
+}
 
 function establish() {
   requestLocalMedia().then(stream => {
@@ -331,7 +336,7 @@ function establish() {
       return;
     setState(State.ESTABLISHING);
     if (role == 'glass-wearer') {
-      RTC.makeOffer(rtcEvents, stream)
+      RTC.makeOffer(stream)
         .then(offer => ws.send({type: 'offer', payload: offer}))
         .catch(e => die(Err.WEBRTC, e));
     }
@@ -381,7 +386,7 @@ ws.onmessage = function(msg) {
       .then(stream => {
               if (state >= State.GET_USER_MEDIA)
                 setState(State.ESTABLISHING);
-              return RTC.makeAnswer(rtcEvents, stream, msg.payload, msg.iceServers)
+              return RTC.makeAnswer(stream, msg.payload, msg.iceServers)
             }, e => die(Err.MEDIA_DENIED, e))
       .then(answer => {
         if (state >= State.ESTABLISHING) {
