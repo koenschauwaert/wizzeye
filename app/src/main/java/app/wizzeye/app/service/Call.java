@@ -93,6 +93,7 @@ public class Call {
 
     private volatile CallState mState = CallState.IDLE;
     private volatile CallError mError = null;
+    private volatile long mErrorTimestamp;
     private volatile int mZoom = 0;
     private volatile boolean mTorch = false;
     private volatile LaserMode mLaser = LaserMode.AUTO;
@@ -191,6 +192,10 @@ public class Call {
     @Nullable
     public CallError getError() {
         return mError;
+    }
+
+    public long getErrorTimestamp() {
+        return mErrorTimestamp;
     }
 
     void start() {
@@ -725,6 +730,7 @@ public class Call {
 
     private void gotoError(CallError error) {
         mError = error;
+        mErrorTimestamp = System.currentTimeMillis();
         gotoState(CallState.ERROR);
     }
 

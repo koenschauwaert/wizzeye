@@ -20,11 +20,14 @@
  */
 package app.wizzeye.app.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import app.wizzeye.app.R;
@@ -32,19 +35,57 @@ import app.wizzeye.app.service.CallError;
 
 public class ErrorFragment extends InRoomFragment {
 
+    private CallError mError;
+    private long mErrorTimestamp;
+
+    private Button mRestart;
+    private Handler mHandler;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (mCall != null) {
+            mError = mCall.getError();
+            mErrorTimestamp = mCall.getErrorTimestamp();
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_error, container, false);
-        TextView errorView = view.findViewById(R.id.error);
-        if (mCall != null) {
-            CallError error = mCall.getError();
-            if (error != null)
-                errorView.setText(error.message);
-        }
-        errorView.setMovementMethod(LinkMovementMethod.getInstance());
+        TextView error = view.findViewById(R.id.error);
+        if (mError != null)
+            error.setText(mError.message);
+        error.setMovementMethod(LinkMovementMethod.getInstance());
+        mRestart = view.findViewById(R.id.restart);
         if (mCall != null)
-            view.findViewById(R.id.restart).setOnClickListener(v -> mCall.restart());
+            mRestart.setOnClickListener(v -> mCall.restart());
+        mHandler = new Handler();
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mHandler.post(mUpdateTimeoutRunnable);
+    }
+
+    @Override
+    public void onPause() {
+        mHandler.removeCallbacks(mUpdateTimeoutRunnable);
+        super.onPause();
+    }
+
+    private final Runnable mUpdateTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mError != null && mError.retryTimeout > 0) {
+                long deadline = mErrorTimestamp + mError.retryTimeout * 1000;
+                long seconds = Math.max(0, (deadline - System.currentTimeMillis()) / 1000);
+                mRestart.setText(getString(R.string.error_try_again_countdown, seconds));
+                mHandler.postDelayed(this, 1000);
+            }
+        }
+    };
 
 }
