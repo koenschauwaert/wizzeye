@@ -164,6 +164,7 @@ function requestLocalMedia() {
 function WizzeyeSocket() {
   this.onerror = null;
   this.onopen = null;
+  this.onclose = null;
   this.onmessage = null;
   this.socket = new WebSocket(location.protocol.replace('http', 'ws') + '//' +
                               location.host + '/ws',
@@ -175,6 +176,10 @@ function WizzeyeSocket() {
   this.socket.onopen = (event => {
     if (this.onopen != null)
       this.onopen();
+  });
+  this.socket.onclose = (event => {
+    if (this.onclose != null)
+      this.onclose();
   });
   this.socket.onmessage = (event => {
     let msg = JSON.parse(event.data);
@@ -301,6 +306,10 @@ ws.onopen = function() {
     return;
   setState(State.WAITING_FOR_JOIN);
   ws.send({type: 'join', room: room, role: role});
+}
+
+ws.onclose = function() {
+  die(Err.WEBSOCKET_ERROR, "Websocket closed");
 }
 
 RTC.onIceConnected = function() {
