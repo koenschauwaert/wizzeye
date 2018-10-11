@@ -37,7 +37,6 @@ let room = location.pathname.replace(/^\/*(.*?)\/*$/, '$1');
 
 document.title = room + " • " + document.title;
 $("#roomname").text(room).attr('href', location);
-$("#nojs").hide();
 
 let UI = {
   BOXES: ["#statusbox", "#errorbox", "#remote"],

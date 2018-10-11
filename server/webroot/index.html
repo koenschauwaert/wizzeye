@@ -30,8 +30,11 @@ SOFTWARE.
   <title>Wizzeye</title>
 </head>
 <body class="fullscreen d-flex flex-column">
-  <div id="nojs" class="alert alert-danger mb-0" role="alert">
-    Please enable Javascript for this site.
+  <div id="error-banner" class="alert alert-danger mb-0 fade show" role="alert">
+    <span>Please enable Javascript for this site.</span>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">×</span>
+    </button>
   </div>
 
   <div class="mx-auto my-auto d-flex flex-column justify-content-center">
@@ -68,6 +71,7 @@ SOFTWARE.
 
   <script src="/s/js/jquery.min.js"></script>
   <script src="/s/js/bootstrap.bundle.min.js"></script>
+  <script src="/s/js/browser-detect.js"></script>
   <script src="/s/js/index.js"></script>
 </body>
 </html>
