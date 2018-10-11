@@ -97,6 +97,8 @@ func (r *Router) putRoom(room *Room) {
 
 func (r *Router) handle(ctx context.Context, msg *Message) {
 	switch msg.Type {
+	case PingMsg:
+		r.ping(ctx, msg.Origin)
 	case JoinMsg:
 		r.join(ctx, msg.Origin, msg.Room, msg.Role)
 	case LeaveMsg:
@@ -124,6 +126,10 @@ func (r *Router) handleAlive(ctx context.Context, c *Client) {
 			}
 		}
 	}
+}
+
+func (r *Router) ping(ctx context.Context, c *Client) {
+	c.Send(ctx, &Message{Type: PongMsg})
 }
 
 func (r *Router) join(ctx context.Context, c *Client, name string, role Role) {

@@ -37,6 +37,12 @@ const (
 	// Fields: code, text.
 	ErrorMsg MsgType = "error"
 
+	// Sent by client to request a pong message.
+	PingMsg MsgType = "ping"
+
+	// Response of the server to a client-initiated ping message.
+	PongMsg MsgType = "pong"
+
 	// Join a room.
 	// Fields: room, role.
 	JoinMsg MsgType = "join"
