@@ -44,9 +44,9 @@ let UI = {
   show: function(box) {
     $.each(this.BOXES, (i, v) => {
       if (v != box)
-        $(v).hide();
+        $(v).addClass('d-none');
     });
-    $(box).show();
+    $(box).removeClass('d-none');
   },
 
   showStatus: function(msg, hint) {
@@ -65,11 +65,11 @@ let UI = {
   },
 
   showTurbulence: function() {
-    $("#notice-turbulence").show();
+    $("#notice-turbulence").removeClass('d-none');
   },
 
   hideTurbulence: function() {
-    $("#notice-turbulence").hide();
+    $("#notice-turbulence").addClass('d-none');
   }
 };
 
