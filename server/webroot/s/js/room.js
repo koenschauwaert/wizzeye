@@ -27,6 +27,7 @@
 
 let params = new URLSearchParams(document.location.search.substring(1));
 let role = params.get('role') || 'observer';
+let pingInterval = params.has('pingInterval') ? parseInt(params.get('pingInterval')) : 30;
 let room = location.pathname.replace(/^\/*(.*?)\/*$/, '$1');
 
 
@@ -184,12 +185,27 @@ function WizzeyeSocket() {
   this.socket.onmessage = (event => {
     let msg = JSON.parse(event.data);
     console.log("Received", msg);
-    if (this.onmessage != null)
+    if (msg.type == 'pong')
+      this.pongReceived = true;
+    else if (this.onmessage != null)
       this.onmessage(msg);
   });
+  if (pingInterval > 0) {
+    this.pongReceived = true;
+    this.intervalId = window.setInterval(() => {
+      if (this.pongReceived) {
+        this.pongReceived = false;
+        this.send({type: 'ping'});
+      } else if (this.onerror != null) {
+        this.onerror("Ping timeout");
+      }
+    }, pingInterval * 1000);
+  }
 }
 
 WizzeyeSocket.prototype.close = function() {
+  if (pingInterval > 0)
+    window.clearInterval(this.intervalId);
   this.socket.close();
 }
 
