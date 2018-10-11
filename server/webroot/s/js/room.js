@@ -212,7 +212,7 @@ let RTC = {
 
   closePC: function() {
     if (this.pc != null) {
-      this.pc.then(pc => pc.close());
+      this.pc.then(pc => pc.close()).catch(e => { /* ignore */ });
       this._rejectPC("closePC called");
     }
     this.pc = new Promise((resolve, reject) => {
