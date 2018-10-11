@@ -745,14 +745,24 @@ public class Call {
 
         String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
         if (!turnHost.isEmpty()) {
+            String user = mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, "");
+            String pass = mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, "");
+            boolean hasPort = turnHost.contains(":");
             iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=udp")
-                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
-                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
-                .createIceServer());
+                .setUsername(user).setPassword(pass).createIceServer());
+            if (!hasPort)
+                iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + ":80?transport=udp")
+                    .setUsername(user).setPassword(pass).createIceServer());
             iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=tcp")
-                .setUsername(mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, ""))
-                .setPassword(mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, ""))
-                .createIceServer());
+                .setUsername(user).setPassword(pass).createIceServer());
+            if (!hasPort)
+                iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + ":80?transport=tcp")
+                    .setUsername(user).setPassword(pass).createIceServer());
+            iceServers.add(PeerConnection.IceServer.builder("turns:" + turnHost + "?transport=tcp")
+                .setUsername(user).setPassword(pass).createIceServer());
+            if (!hasPort)
+                iceServers.add(PeerConnection.IceServer.builder("turns:" + turnHost + ":443?transport=tcp")
+                    .setUsername(user).setPassword(pass).createIceServer());
         }
 
         return iceServers;
