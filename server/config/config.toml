@@ -1,1 +1,22 @@
+#
+# Example configuration file for Wizzeye Server
+#
+
+# Address on which to listen for HTTP requests.
+# When using a reverse proxy such as nginx, you will want to listen
+# only to localhost as in the example below.
+# Default is ":8080", i.e., listen to any address on port 8080.
 listen = "127.0.0.1:9000"
+
+
+# WARNING: settings below are for advanced use. Proceed with care.
+
+# Interval in seconds between ping messages to each client.
+#pingInterval = 60
+
+# Timeout in seconds to wait for a pong response from a client.
+#pongTimeout = 5
+
+# Timeout in seconds to wait for completion when sending a message
+# to a client.
+#writeTimeout = 10

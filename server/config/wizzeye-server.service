@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 RootDirectory=/opt/wizzeye
-ExecStart=/wizzeye-server
+ExecStart=/wizzeye-server-linux-amd64
 User=wizzeye
 NoNewPrivileges=yes
 
