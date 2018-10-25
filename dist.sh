@@ -7,7 +7,7 @@ distdir="build/dist"
 zipdir="${distdir}/wizzeye-${version}"
 
 echo ":: Cleaning up"
-rm -rf build app/build server/build
+rm -rf build app/build
 
 echo ":: Making dist directory"
 mkdir -p "${zipdir}"
@@ -17,10 +17,11 @@ cp LICENSE "${zipdir}/LICENSE"
 echo ":: Building server"
 platforms="linux-amd64 linux-arm linux-arm64 darwin-amd64"
 for p in $platforms; do
+    echo $p
     export GOOS=$(echo $p | cut -d- -f1)
     export GOARCH=$(echo $p | cut -d- -f2)
-    make -C server
-    cp server/build/wizzeye-server-$GOOS-$GOARCH "${zipdir}"
+    export CGO_ENABLED=0
+    ( cd server && go build -o "../${zipdir}/wizzeye-server-$GOOS-$GOARCH" )
 done
 cp -r server/webroot "${zipdir}/webroot"
 cp server/config/config.toml "${zipdir}/config.toml"
