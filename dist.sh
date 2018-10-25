@@ -15,13 +15,14 @@ cp README.md "${zipdir}/README.md"
 cp LICENSE "${zipdir}/LICENSE"
 
 echo ":: Building server"
-platforms="linux-amd64 linux-arm linux-arm64 darwin-amd64"
+platforms="linux-amd64 linux-arm linux-arm64 darwin-amd64 windows-amd64"
 for p in $platforms; do
     echo $p
     export GOOS=$(echo $p | cut -d- -f1)
     export GOARCH=$(echo $p | cut -d- -f2)
     export CGO_ENABLED=0
-    ( cd server && go build -o "../${zipdir}/wizzeye-server-$GOOS-$GOARCH" )
+    [ $GOOS = windows ] && ext=".exe" || ext=""
+    ( cd server && go build -o "../${zipdir}/wizzeye-server-${GOOS}-${GOARCH}${ext}" )
 done
 cp -r server/webroot "${zipdir}/webroot"
 cp server/config/config.toml "${zipdir}/config.toml"
