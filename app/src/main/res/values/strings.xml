@@ -7,6 +7,7 @@
     <string name="menu_share_link">Share link</string>
     <string name="menu_share">Share</string>
     <string name="menu_refresh">Refresh</string>
+    <string name="menu_scan_qr">Scan QR code</string>
 
     <!-- Preferences -->
     <string name="pref_general_category">General</string>
@@ -46,6 +47,7 @@
     <string name="error_webrtc">An error has occurred while establishing the video communication.  Check the logs for more details.</string>
     <string name="error_ice">We could not reach the remote observer\'s device.  This could be due to restrictive firewalls.  Consider adding a TURN server in the settings.</string>
     <string name="error_camera">The cameras of the Iristick smart glasses experienced an error.  Make sure no other apps are using the cameras and try again.</string>
+    <string name="error_import_settings">Some/all settings could not be imported. Please ensure the QR code contains valid settings and try again.</string>
 
     <!-- Notification -->
     <string name="notif_channel_name">Ongoing call</string>
@@ -89,4 +91,7 @@
 
     <!-- SettingsActivity -->
     <string name="settings_title">Settings</string>
+    <string name="xzing_not_installed_title">QR scanner not found</string>
+    <string name="xzing_not_installed_message">The import functionality needs a compatible QR code scanner app to be installed.</string>
+    <string name="xzing_not_installed_ok">Open in Play Store</string>
 </resources>

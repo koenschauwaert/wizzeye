@@ -20,6 +20,7 @@
  */
 package app.wizzeye.app;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -32,10 +33,17 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -50,6 +58,21 @@ public class SettingsActivity extends BaseActivity {
 
     public static final String KEY_LAST_ROOM = "last_room";
     public static final String KEY_LASER_MODE = "laser_mode";
+
+    private static final Set<String> IMPORTABLE_KEYS;
+    static {
+        IMPORTABLE_KEYS = new HashSet<>();
+        IMPORTABLE_KEYS.add(KEY_VIDEO_QUALITY);
+        IMPORTABLE_KEYS.add(KEY_SERVER);
+        IMPORTABLE_KEYS.add(KEY_STUN_HOSTNAME);
+        IMPORTABLE_KEYS.add(KEY_TURN_HOSTNAME);
+        IMPORTABLE_KEYS.add(KEY_TURN_USERNAME);
+        IMPORTABLE_KEYS.add(KEY_TURN_PASSWORD);
+    }
+
+    private static final String TAG = "SettingsActivity";
+
+    private static final int REQUEST_QR = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,9 +103,27 @@ public class SettingsActivity extends BaseActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            setHasOptionsMenu(true);
             addPreferencesFromResource(R.xml.preferences);
             findPreference(KEY_ABOUT_VERSION).setSummary(getString(R.string.pref_about_version_summary, BuildConfig.VERSION_NAME));
             findPreference(KEY_ABOUT_LEGAL).setOnPreferenceClickListener(mLegalClickListener);
+        }
+
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            inflater.inflate(R.menu.settings, menu);
+            super.onCreateOptionsMenu(menu, inflater);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+            case R.id.scan_qr:
+                scanQR();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+            }
         }
 
         @Override
@@ -96,6 +137,34 @@ public class SettingsActivity extends BaseActivity {
             onSharedPreferenceChanged(prefs, KEY_TURN_HOSTNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_USERNAME);
             onSharedPreferenceChanged(prefs, KEY_TURN_PASSWORD);
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if(requestCode == REQUEST_QR && resultCode == RESULT_OK) {
+                String scanResult = data.getStringExtra("SCAN_RESULT");
+                if (scanResult == null) {
+                    return;
+                }
+
+                boolean showError = false;
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
+                for (String item : scanResult.split(";")) {
+                    String[] key = item.split("=", 2);
+                    if (key.length == 2 && IMPORTABLE_KEYS.contains(key[0])) {
+                        editor.putString(key[0], key[1]);
+                    } else {
+                        Log.w(TAG, "Ignoring invalid item: " + item);
+                        showError = true;
+                    }
+                }
+                editor.apply();
+
+                if (showError) {
+                    Toast.makeText(getContext(), R.string.error_import_settings, Toast.LENGTH_LONG).show();
+                }
+            }
         }
 
         @Override
@@ -114,6 +183,29 @@ public class SettingsActivity extends BaseActivity {
             case KEY_TURN_PASSWORD:
                 pref.setSummary(prefs.getString(key, "").isEmpty() ? "" : "•••••");
                 break;
+            }
+        }
+
+        private void scanQR(){
+            try {
+                Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+                this.startActivityForResult(intent, REQUEST_QR);
+            } catch (ActivityNotFoundException e) {
+                new AlertDialog.Builder(getContext())
+                    .setTitle(R.string.xzing_not_installed_title)
+                    .setMessage(R.string.xzing_not_installed_message)
+                    .setPositiveButton(R.string.xzing_not_installed_ok, (dlg, which) -> {
+                        Uri u = Uri.parse("market://details?id=com.google.zxing.client.android");
+                        Intent intent = new Intent(Intent.ACTION_VIEW, u);
+                        try {
+                            startActivity(intent);
+                        } catch (ActivityNotFoundException e2) {
+                            Log.e(TAG, "Could not open Play Store link", e2);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
             }
         }
 
