@@ -47,8 +47,7 @@
 
         <Preference
             android:key="about_legal"
-            android:title="@string/pref_about_legal">
-        </Preference>
+            android:title="@string/pref_about_legal" />
 
     </PreferenceCategory>
 
