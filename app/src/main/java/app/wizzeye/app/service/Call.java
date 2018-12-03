@@ -35,6 +35,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.iristick.smartglass.core.Headset;
+import com.iristick.smartglass.core.IristickBinding;
 import com.iristick.smartglass.core.IristickConnection;
 import com.iristick.smartglass.support.app.IristickApp;
 
@@ -799,7 +800,7 @@ public class Call {
                 sendMessage(What.HEADSET_DISCONNECTED, 0, 0, null, 0);
         }
         @Override
-        public void onIristickServiceInitialized() {
+        public void onIristickServiceInitialized(IristickBinding binding) {
         }
         @Override
         public void onIristickServiceError(int error) {

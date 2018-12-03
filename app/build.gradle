@@ -25,11 +25,11 @@ def props = new Properties()
 props.load(new FileInputStream(project.file('custom.properties')))
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId props.applicationId
         minSdkVersion 24
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 2
         versionName "1.1"
         manifestPlaceholders = [
@@ -77,11 +77,11 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:support-annotations:27.1.1'
-    implementation 'com.android.support:design:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
-    implementation 'com.iristick.smartglass:core:0.7'
-    implementation 'com.iristick.smartglass:support:0.7'
+    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.iristick.smartglass:core:0.8'
+    implementation 'com.iristick.smartglass:support:0.8'
     implementation 'org.webrtc:google-webrtc:1.0.24616'
     implementation 'com.squareup.okhttp3:okhttp:3.11.0'
 }
