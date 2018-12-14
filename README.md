@@ -8,7 +8,7 @@ observer.  Bidirectional audio communication is also enabled.
 
 Under the hood, Wizzeye makes use of the [WebRTC](https://webrtc.org/)
 technology to enable direct peer-to-peer communication between the
-glass-wearer's phone and the remove observer's computer.
+glass-wearer's phone and the remote observer's computer.
 
 
 Using Wizzeye
@@ -105,11 +105,11 @@ Windows.
 5. Configure a reverse proxy to forward HTTPS requests to
    `http://127.0.0.1:9000` (or whatever you specified in the `config.toml`).
    Special handling may be required for the `/ws` path that serves a WebSocket
-   connection.  If using nginx, an example configuration is found in
+   connection.  For nginx, an example configuration is available in
    [`server/config`](server/config/nginx.conf).
 6. You should also have a STUN and TURN infrastructure to facilitate the
    peer-to-peer video communication.  You can either install it yourself (e.g.,
-   with [coturn][]) or use a hosted infrastructure.  In either case, you will
+   with [coturn][]) or use a hosted infrastructure.  In both cases, you will
    have to setup the Wizzeye Android app to use your infrastructure.
 7. Enjoy!
 
@@ -129,9 +129,10 @@ Building the server
    CGO_ENABLED=0 go build
    ```
 5. The resulting binary will be available as `server` or `server.exe`.
+   Copy it, along with the `webroot` folder, to your server.
 
 Note that the Wizzeye server provides a download link for the Android app's
-APK.  This APK is expected to be placed in the `webroot/s/` folder.
+APK.  This APK should have been copied to `webroot/s/Wizzeye.apk`.
 
 [go]: https://golang.org/dl/
 
