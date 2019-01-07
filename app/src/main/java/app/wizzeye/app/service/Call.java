@@ -61,8 +61,11 @@ import org.webrtc.VideoSink;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import app.wizzeye.app.SettingsActivity;
 import okhttp3.Request;
@@ -325,8 +328,12 @@ public class Call {
         case IDLE:
             switch (what) {
             case START:
-                mIceServers = buildIceServers();
-                gotoState(CallState.WAITING_FOR_NETWORK);
+                try {
+                    mIceServers = buildIceServers();
+                    gotoState(CallState.WAITING_FOR_NETWORK);
+                } catch (URISyntaxException e) {
+                    gotoError(CallError.INVALID_ICE_SERVERS);
+                }
                 return true;
             case STOP:
                 return true;
@@ -339,8 +346,12 @@ public class Call {
                 return true;
             case RESTART:
                 removeMessages(What.RESTART);
-                mIceServers = buildIceServers();
-                gotoState(CallState.WAITING_FOR_NETWORK);
+                try {
+                    mIceServers = buildIceServers();
+                    gotoState(CallState.WAITING_FOR_NETWORK);
+                } catch (URISyntaxException e) {
+                    gotoError(CallError.INVALID_ICE_SERVERS);
+                }
                 return true;
             }
             break;
@@ -738,34 +749,55 @@ public class Call {
         gotoState(CallState.ERROR);
     }
 
+    private static final Pattern HOSTNAME_PATTERN = Pattern.compile(
+            "([a-zA-Z]+://)?" + // scheme
+            "([a-zA-Z0-9][-a-zA-Z0-9]*(?:\\.[a-zA-Z0-9][-a-zA-Z0-9]*)*" + // hostname
+            "|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}" + // ipv4 address
+            "|\\[[a-zA-Z0-9]+(?:::?[a-zA-Z0-9]+)\\])" + // ipv6 address
+            "(:[0-9]+)?/?"); // port number
+
     @NonNull
-    private List<PeerConnection.IceServer> buildIceServers() {
+    private List<PeerConnection.IceServer> buildIceServers() throws URISyntaxException {
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
 
         String stunHost = mPreferences.getString(SettingsActivity.KEY_STUN_HOSTNAME, "");
-        if (!stunHost.isEmpty())
-            iceServers.add(PeerConnection.IceServer.builder("stun:" + stunHost)
+        if (!stunHost.isEmpty()) {
+            Matcher m = HOSTNAME_PATTERN.matcher(stunHost);
+            if (!m.matches())
+                throw new URISyntaxException(stunHost, "Invalid STUN hostname");
+            String host = m.group(2);
+            String port = m.group(3);
+            if (port != null)
+                host += ":" + port;
+            iceServers.add(PeerConnection.IceServer.builder("stun:" + host)
                 .createIceServer());
+        }
 
         String turnHost = mPreferences.getString(SettingsActivity.KEY_TURN_HOSTNAME, "");
         if (!turnHost.isEmpty()) {
             String user = mPreferences.getString(SettingsActivity.KEY_TURN_USERNAME, "");
             String pass = mPreferences.getString(SettingsActivity.KEY_TURN_PASSWORD, "");
-            boolean hasPort = turnHost.contains(":");
-            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=udp")
+            Matcher m = HOSTNAME_PATTERN.matcher(turnHost);
+            if (!m.matches())
+                throw new URISyntaxException(turnHost, "Invalid TURN hostname");
+            String host = m.group(2);
+            String port = m.group(3);
+            if (port != null)
+                host += ":" + port;
+            iceServers.add(PeerConnection.IceServer.builder("turn:" + host + "?transport=udp")
                 .setUsername(user).setPassword(pass).createIceServer());
-            if (!hasPort)
-                iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + ":80?transport=udp")
+            if (port == null)
+                iceServers.add(PeerConnection.IceServer.builder("turn:" + host + ":80?transport=udp")
                     .setUsername(user).setPassword(pass).createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + "?transport=tcp")
+            iceServers.add(PeerConnection.IceServer.builder("turn:" + host + "?transport=tcp")
                 .setUsername(user).setPassword(pass).createIceServer());
-            if (!hasPort)
-                iceServers.add(PeerConnection.IceServer.builder("turn:" + turnHost + ":80?transport=tcp")
+            if (port == null)
+                iceServers.add(PeerConnection.IceServer.builder("turn:" + host + ":80?transport=tcp")
                     .setUsername(user).setPassword(pass).createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("turns:" + turnHost + "?transport=tcp")
+            iceServers.add(PeerConnection.IceServer.builder("turns:" + host + "?transport=tcp")
                 .setUsername(user).setPassword(pass).createIceServer());
-            if (!hasPort)
-                iceServers.add(PeerConnection.IceServer.builder("turns:" + turnHost + ":443?transport=tcp")
+            if (port == null)
+                iceServers.add(PeerConnection.IceServer.builder("turns:" + host + ":443?transport=tcp")
                     .setUsername(user).setPassword(pass).createIceServer());
         }
 
