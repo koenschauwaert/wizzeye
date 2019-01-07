@@ -20,7 +20,7 @@
  */
 "use strict";
 
-if (!!window.chrome && !!window.chrome.webstore) { // chrome
+if (navigator.userAgent.indexOf("Chrome") != -1) { // chrome
   $("#error-banner").hide();
 } else if (typeof InstallTrigger !== 'undefined') { // firefox
   $("#error-banner")
