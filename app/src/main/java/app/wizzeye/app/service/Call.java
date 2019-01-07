@@ -262,6 +262,7 @@ public class Call {
     // State machine
 
     // Internal variable only used on this thread
+    private List<PeerConnection.IceServer> mIceServers;
     private NetworkMonitor mNetworkMonitor;
     private SignalingProtocol mSignal;
     private IristickCallback mIristickCallback;
@@ -324,6 +325,7 @@ public class Call {
         case IDLE:
             switch (what) {
             case START:
+                mIceServers = buildIceServers();
                 gotoState(CallState.WAITING_FOR_NETWORK);
                 return true;
             case STOP:
@@ -337,6 +339,7 @@ public class Call {
                 return true;
             case RESTART:
                 removeMessages(What.RESTART);
+                mIceServers = buildIceServers();
                 gotoState(CallState.WAITING_FOR_NETWORK);
                 return true;
             }
@@ -429,7 +432,7 @@ public class Call {
             case SDP_CREATE_SUCCESS:
                 Log.d(TAG, "Offer created");
                 mPC.setLocalDescription(mWebRtcCallback, (SessionDescription) msg.obj);
-                mSignal.offer((SessionDescription) msg.obj, buildIceServers());
+                mSignal.offer((SessionDescription) msg.obj, mIceServers);
                 return true;
             case SIGNALING_ANSWER:
                 mPC.setRemoteDescription(mWebRtcCallback, (SessionDescription) msg.obj);
@@ -711,7 +714,7 @@ public class Call {
             mAudioTrack.setEnabled(true);
 
             /* Create PeerConnection */
-            PeerConnection.RTCConfiguration config = new PeerConnection.RTCConfiguration(buildIceServers());
+            PeerConnection.RTCConfiguration config = new PeerConnection.RTCConfiguration(mIceServers);
             mPC = mFactory.createPeerConnection(config, mWebRtcCallback);
 
             /* Create local media stream */
