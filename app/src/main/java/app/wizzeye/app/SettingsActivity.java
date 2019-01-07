@@ -140,6 +140,12 @@ public class SettingsActivity extends BaseActivity {
         }
 
         @Override
+        public void onPause() {
+            PreferenceManager.getDefaultSharedPreferences(getActivity()).unregisterOnSharedPreferenceChangeListener(this);
+            super.onPause();
+        }
+
+        @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             super.onActivityResult(requestCode, resultCode, data);
             if(requestCode == REQUEST_QR && resultCode == RESULT_OK) {
