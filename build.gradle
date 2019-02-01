@@ -33,7 +33,15 @@ allprojects {
     repositories {
         google()
         jcenter()
-        ivy { url 'https://developer.iristick.com/repo' }
+        ivy {
+            url 'https://developer.iristick.com/repo'
+            if (rootProject.hasProperty('iristickUsername')) {
+                credentials {
+                    username rootProject.iristickUsername
+                    password rootProject.iristickPassword
+                }
+            }
+        }
     }
 }
 
