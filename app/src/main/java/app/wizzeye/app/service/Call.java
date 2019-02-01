@@ -416,6 +416,10 @@ public class Call {
                     Log.e(TAG, "Iristick Services are outdated");
                     gotoError(CallError.SERVICES_OUTDATED);
                     break;
+                case IristickConnection.ERROR_DEPRECATED_SDK:
+                    Log.e(TAG, "Iristick SDK used to build Wizzeye is deprecated");
+                    gotoError(CallError.WIZZEYE_OUTDATED);
+                    break;
                 default:
                     Log.e(TAG, "Unknown Iristick Services error " + msg.arg1);
                     gotoError(CallError.SERVICES_UNKNOWN);

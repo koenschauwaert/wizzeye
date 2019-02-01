@@ -25,6 +25,7 @@ import android.support.annotation.StringRes;
 import app.wizzeye.app.R;
 
 public enum CallError {
+    WIZZEYE_OUTDATED(R.string.error_wizzeye_outdated, 0),
     INVALID_ICE_SERVERS(R.string.error_invalid_ice_servers, 0),
     SERVER_UNREACHABLE(R.string.error_server_unreachable, 10),
     SERVICES_NOT_INSTALLED(R.string.error_services_not_installed, 0),

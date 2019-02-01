@@ -37,6 +37,7 @@
     <string name="state_hint_waiting_for_observer">Please direct the remote observer to %1$s with room name ‘%2$s’.  You can also use the share button above to share a direct link.</string>
 
     <!-- Errors -->
+    <string name="error_wizzeye_outdated">The installed version of Wizzeye is not supported anymore.  Please update and try again.</string>
     <string name="error_invalid_ice_servers">The STUN or TURN server configuration is invalid.  Please check the server names in the settings.</string>
     <string name="error_server_unreachable">The Wizzeye server could not be reached.  Make sure you are running the latest Wizzeye, and try again later or choose another server in the settings.</string>
     <string name="error_services_not_installed">The Iristick Services are not installed.  Please install from the <a href="https://play.google.com/store/apps/details?id=com.iristick.smartglass.service">Play Store</a> and try again.</string>
