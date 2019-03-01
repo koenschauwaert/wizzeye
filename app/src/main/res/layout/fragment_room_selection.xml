@@ -53,6 +53,7 @@
             android:id="@+id/room"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/roomselection_room_name"
             android:inputType="textUri"
             android:imeOptions="actionGo|flagForceAscii|flagNoExtractUi|flagNoFullscreen|flagNoPersonalizedLearning"
             android:text=" "

@@ -85,6 +85,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/error_try_again"
+        android:contentDescription="@string/error_try_again"
         app:layout_constraintStart_toStartOf="@+id/title"
         app:layout_constraintEnd_toStartOf="@+id/hangup"
         app:layout_constraintBaseline_toBaselineOf="@+id/hangup"
