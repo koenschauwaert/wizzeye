@@ -40,6 +40,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.iristick.smartglass.core.Intents;
+import com.iristick.smartglass.support.app.IristickApp;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +75,8 @@ public class SettingsActivity extends BaseActivity {
 
     private static final String TAG = "SettingsActivity";
 
-    private static final int REQUEST_QR = 0;
+    private static final int REQUEST_QR_IRISTICK = 0;
+    private static final int REQUEST_QR_ZXING = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,29 +151,12 @@ public class SettingsActivity extends BaseActivity {
 
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            super.onActivityResult(requestCode, resultCode, data);
-            if(requestCode == REQUEST_QR && resultCode == RESULT_OK) {
-                String scanResult = data.getStringExtra("SCAN_RESULT");
-                if (scanResult == null) {
-                    return;
-                }
-
-                boolean showError = false;
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
-                for (String item : scanResult.split(";")) {
-                    String[] key = item.split("=", 2);
-                    if (key.length == 2 && IMPORTABLE_KEYS.contains(key[0])) {
-                        editor.putString(key[0], key[1]);
-                    } else {
-                        Log.w(TAG, "Ignoring invalid item: " + item);
-                        showError = true;
-                    }
-                }
-                editor.apply();
-
-                if (showError) {
-                    Toast.makeText(getContext(), R.string.error_import_settings, Toast.LENGTH_LONG).show();
-                }
+            if (requestCode == REQUEST_QR_IRISTICK && resultCode == Intents.RESULT_OK) {
+                importSettings(data.getStringExtra(Intents.EXTRA_BARCODE_RESULT));
+            } else if (requestCode == REQUEST_QR_ZXING && resultCode == RESULT_OK) {
+                importSettings(data.getStringExtra("SCAN_RESULT"));
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
             }
         }
 
@@ -192,11 +179,38 @@ public class SettingsActivity extends BaseActivity {
             }
         }
 
-        private void scanQR(){
+        private void importSettings(String settings) {
+            if (settings == null)
+                return;
+            boolean showError = false;
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
+            for (String item : settings.split(";")) {
+                String[] key = item.split("=", 2);
+                if (key.length == 2 && IMPORTABLE_KEYS.contains(key[0])) {
+                    editor.putString(key[0], key[1]);
+                } else {
+                    Log.w(TAG, "Ignoring invalid item: " + item);
+                    showError = true;
+                }
+            }
+            editor.apply();
+
+            if (showError) {
+                Toast.makeText(getContext(), R.string.error_import_settings, Toast.LENGTH_LONG).show();
+            }
+        }
+
+        private void scanQR() {
             try {
-                Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-                this.startActivityForResult(intent, REQUEST_QR);
+                if (IristickApp.getHeadset() != null) {
+                    Intent intent = new Intent(Intents.ACTION_SCAN_BARCODE);
+                    intent.putExtra(Intents.EXTRA_BARCODE_SCAN_FORMATS, "QR_CODE");
+                    startActivityForResult(intent, REQUEST_QR_IRISTICK);
+                } else {
+                    Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+                    intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+                    startActivityForResult(intent, REQUEST_QR_ZXING);
+                }
             } catch (ActivityNotFoundException e) {
                 new AlertDialog.Builder(getContext())
                     .setTitle(R.string.xzing_not_installed_title)
