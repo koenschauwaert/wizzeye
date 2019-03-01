@@ -152,6 +152,7 @@ public class Call {
     }
 
     private synchronized void fireParametersChanged() {
+        sendMessage(What.PARAMETERS_CHANGED, 0, 0, null, 0);
         for (Message msg : mMessages[Event.PARAMETERS_CHANGED.ordinal()])
             Message.obtain(msg).sendToTarget();
     }
@@ -308,6 +309,7 @@ public class Call {
         CAMERA_ERROR,               // empty
         ADD_VIDEO_SINK,             // obj = (VideoSink)
         REMOVE_VIDEO_SINK,          // obj = (VideoSink)
+        PARAMETERS_CHANGED,         // empty
         TRIGGER_AF,                 // empty
         TAKE_PICTURE,               // empty
     }
@@ -502,6 +504,9 @@ public class Call {
             case REMOVE_VIDEO_SINK:
                 mVideoTrack.addSink((VideoSink) msg.obj);
                 return true;
+            case PARAMETERS_CHANGED:
+                applyParameters();
+                return true;
             case TRIGGER_AF:
                 mVideoCap.triggerAF();
                 return true;
@@ -595,6 +600,9 @@ public class Call {
         case ESTABLISHING:
             if (newState.ordinal() > CallState.ESTABLISHING.ordinal())
                 break;
+            Log.v(TAG, "Turning off torch and laser pointer");
+            mHeadset.setTorchMode(false);
+            mHeadset.setLaserPointer(false);
             Log.v(TAG, "Closing PeerConnection");
             mSignal.reset();
             mVideoCap.stopCapture();
@@ -717,7 +725,7 @@ public class Call {
             /* Set up video source */
             mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mService.mEglBase.getEglBaseContext());
             mVideoSrc = mFactory.createVideoSource(false);
-            mVideoCap = new IristickCapturer(this, mHeadset, mWebRtcCallback);
+            mVideoCap = new IristickCapturer(mHeadset, mWebRtcCallback, mZoom);
             mVideoCap.initialize(mSurfaceTextureHelper, mService, mVideoSrc.getCapturerObserver());
             mVideoCap.startCapture(mQuality.frameSize.getWidth(), mQuality.frameSize.getHeight(), 30);
             mVideoTrack = mFactory.createVideoTrack("Wizzeye_v0", mVideoSrc);
@@ -744,6 +752,11 @@ public class Call {
             sdpcstr.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
             mPC.createOffer(mWebRtcCallback, sdpcstr);
             break;
+
+        case CALL_IN_PROGRESS:
+            Log.v(TAG, "Applying call parameters");
+            applyParameters();
+            break;
         }
     }
 
@@ -751,6 +764,26 @@ public class Call {
         mError = error;
         mErrorTimestamp = System.currentTimeMillis();
         gotoState(CallState.ERROR);
+    }
+
+    private void applyParameters() {
+        final int zoom = mZoom;
+        final boolean torch = mTorch;
+        final LaserMode laser = mLaser;
+
+        mVideoCap.setZoom(zoom);
+        mHeadset.setTorchMode(torch);
+        switch (laser) {
+        case OFF:
+            mHeadset.setLaserPointer(false);
+            break;
+        case ON:
+            mHeadset.setLaserPointer(true);
+            break;
+        case AUTO:
+            mHeadset.setLaserPointer(mZoom > 0);
+            break;
+        }
     }
 
     private static final Pattern HOSTNAME_PATTERN = Pattern.compile(

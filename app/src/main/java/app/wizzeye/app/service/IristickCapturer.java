@@ -28,7 +28,6 @@ import android.media.ImageReader;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -70,12 +69,11 @@ class IristickCapturer implements CameraVideoCapturer {
 
     private static final DateFormat PICTURE_FILENAME = new SimpleDateFormat("'IMG_'yyyyMMdd_HHmmssSSS'.jpg'", Locale.US);
 
-    private static final int MSG_PARAMETERS_CHANGED = 0;
-    private static final int MSG_TRIGGER_AF = 1;
-    private static final int MSG_TAKE_PICTURE = 2;
+    private static final int MSG_SET_ZOOM = 0;          // arg1 = zoom level
+    private static final int MSG_TRIGGER_AF = 1;        // empty
+    private static final int MSG_TAKE_PICTURE = 2;      // empty
 
     /* Initialized by constructor */
-    private final Call mCall;
     private final Headset mHeadset;
     private final CameraEventsHandler mEvents;
     private final String[] mCameraNames;
@@ -93,18 +91,17 @@ class IristickCapturer implements CameraVideoCapturer {
     private boolean mSessionOpening;
     private boolean mStopping;
     private int mFailureCount;
-    private int mCameraIdx = 0;
+    private int mZoom;
+    private int mCameraIdx;
     private int mWidth;
     private int mHeight;
     private int mFramerate;
-    private Message mParametersChangedMessage;
     private CameraDevice mCamera;
     private Surface mSurface;
     private CaptureSession mCaptureSession;
     private boolean mFirstFrameObserved;
 
-    IristickCapturer(@NonNull Call call, @NonNull Headset headset,
-                     @Nullable CameraEventsHandler eventsHandler) {
+    IristickCapturer(@NonNull Headset headset, @Nullable CameraEventsHandler eventsHandler, int zoom) {
         if (eventsHandler == null) {
             eventsHandler = new CameraEventsHandler() {
                 @Override
@@ -121,9 +118,9 @@ class IristickCapturer implements CameraVideoCapturer {
                 public void onCameraClosed() {}
             };
         }
-        mCall = call;
         mHeadset = headset;
         mEvents = eventsHandler;
+        mZoom = zoom;
         mCameraNames = headset.getCameraIdList();
     }
 
@@ -156,12 +153,10 @@ class IristickCapturer implements CameraVideoCapturer {
                 return;
             }
 
+            mCameraIdx = (mCameraNames.length >= 2 && mZoom > 0 ? 1 : 0);
             mWidth = width;
             mHeight = height;
             mFramerate = framerate;
-
-            mParametersChangedMessage = mMessageHandler.obtainMessage(MSG_PARAMETERS_CHANGED);
-            mCall.registerMessage(Call.Event.PARAMETERS_CHANGED, mParametersChangedMessage);
 
             openCamera(true);
         }
@@ -182,12 +177,6 @@ class IristickCapturer implements CameraVideoCapturer {
                     Thread.currentThread().interrupt();
                     return;
                 }
-            }
-
-            if (mParametersChangedMessage != null) {
-                mCall.unregisterMessage(mParametersChangedMessage);
-                mParametersChangedMessage.recycle();
-                mParametersChangedMessage = null;
             }
 
             if (mCaptureSession != null) {
@@ -225,12 +214,16 @@ class IristickCapturer implements CameraVideoCapturer {
         throw new UnsupportedOperationException();
     }
 
+    void setZoom(int zoom) {
+        mMessageHandler.obtainMessage(MSG_SET_ZOOM, zoom, 0).sendToTarget();
+    }
+
     void triggerAF() {
-        mMessageHandler.sendMessage(mMessageHandler.obtainMessage(MSG_TRIGGER_AF));
+        mMessageHandler.obtainMessage(MSG_TRIGGER_AF).sendToTarget();
     }
 
     void takePicture() {
-        mMessageHandler.sendMessage(mMessageHandler.obtainMessage(MSG_TAKE_PICTURE));
+        mMessageHandler.obtainMessage(MSG_TAKE_PICTURE).sendToTarget();
     }
 
     private void openCamera(boolean resetFailures) {
@@ -315,25 +308,7 @@ class IristickCapturer implements CameraVideoCapturer {
     }
 
     private void setupCaptureRequest(CaptureRequest.Builder builder) {
-        int zoom = mCall.getZoom();
-        boolean torch = mCall.getTorch();
-        LaserMode laser = mCall.getLaser();
-
-        zoom = Math.max(0, Math.min(mCameraNames.length >= 2 ? 3 : 0, zoom));
-
-        builder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, zoom - 1)));
-        builder.set(CaptureRequest.FLASH_MODE, torch ? CaptureRequest.FLASH_MODE_ON : CaptureRequest.FLASH_MODE_OFF);
-        switch (laser) {
-        case OFF:
-            builder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_OFF);
-            break;
-        case ON:
-            builder.set(CaptureRequest.LASER_MODE, CaptureRequest.LASER_MODE_ON);
-            break;
-        case AUTO:
-            builder.set(CaptureRequest.LASER_MODE, zoom == 0 ? CaptureRequest.LASER_MODE_OFF : CaptureRequest.LASER_MODE_ON);
-            break;
-        }
+        builder.set(CaptureRequest.SCALER_ZOOM, (float)(1 << Math.max(0, mZoom - 1)));
         if (mCameraIdx == 1)
             builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
     }
@@ -345,9 +320,8 @@ class IristickCapturer implements CameraVideoCapturer {
             if (mSessionOpening || mStopping || mCaptureSession == null)
                 return;
 
-            int zoom = mCall.getZoom();
             if (mCameraNames.length >= 2 &&
-                    ((zoom == 0 && mCameraIdx != 0) || (zoom > 0 && mCameraIdx != 1))) {
+                    ((mZoom == 0 && mCameraIdx != 0) || (mZoom > 0 && mCameraIdx != 1))) {
                 Log.d(TAG, "Switching cameras");
                 mCameraIdx = (mCameraIdx + 1) % 2;
                 openCamera(true);
@@ -394,8 +368,11 @@ class IristickCapturer implements CameraVideoCapturer {
 
     private final Handler.Callback mMessageCallback = msg -> {
         switch (msg.what) {
-        case MSG_PARAMETERS_CHANGED:
-            applyParametersInternal();
+        case MSG_SET_ZOOM:
+            synchronized (mStateLock) {
+                mZoom = msg.arg1;
+                applyParametersInternal();
+            }
             return true;
         case MSG_TRIGGER_AF:
             triggerAFInternal();
@@ -470,7 +447,7 @@ class IristickCapturer implements CameraVideoCapturer {
         }
 
         @Override
-        public void onConfigureFailed(CaptureSession session) {
+        public void onConfigureFailed(CaptureSession session, int error) {
             handleFailure("Error while creating capture session");
         }
 
