@@ -131,6 +131,23 @@ public class CallFragment extends InRoomFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        Headset headset = IristickApp.getHeadset();
+        if (headset != null)
+            headset.configureVoiceCommands(Headset.VOICE_FLAG_INHIBIT_COMMAND_DISCOVERY |
+                                           Headset.VOICE_FLAG_INHIBIT_GO_BACK);
+    }
+
+    @Override
+    public void onPause() {
+        Headset headset = IristickApp.getHeadset();
+        if (headset != null)
+            headset.configureVoiceCommands(0);
+        super.onPause();
+    }
+
+    @Override
     public boolean onBackPressed() {
         if (mDrawerLayout.isDrawerOpen(mOptions)) {
             mDrawerLayout.closeDrawers();
