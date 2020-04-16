@@ -113,8 +113,19 @@ Windows.
    have to setup the Wizzeye Android app to use your infrastructure.
 7. Enjoy!
 
+Alternatively, an [official docker image][] is available to run in a managed
+cloud infrastructure.  You can run it with
+``` shell
+docker run -p 8080:8080 wizzeye/wizzeye
+```
+This will expose an HTTP server on port 8080.  You will have to configure a
+reverse proxy or load balancer that terminates HTTPS requests, as browsers do
+not allow WebRTC over unencrypted HTTP.  You might also want to set up a
+STUN/TURN infrastructure.
+
 [latest]: https://github.com/wizzeye/wizzeye/releases/latest
 [coturn]: https://github.com/coturn/coturn
+[official docker image]: https://hub.docker.com/r/wizzeye/wizzeye
 
 
 Building the server

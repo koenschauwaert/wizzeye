@@ -1,0 +1,6 @@
+*
+!app/build/outputs/apk/release/app-release.apk
+!server/go.mod
+!server/go.sum
+!server/*.go
+!server/webroot

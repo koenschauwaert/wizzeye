@@ -5,6 +5,7 @@ set -e -u
 version=$(git describe --exact-match)
 distdir="build/dist"
 zipdir="${distdir}/wizzeye-${version}"
+dockerimg="wizzeye/wizzeye"
 
 echo ":: Cleaning up"
 rm -rf build app/build
@@ -36,6 +37,10 @@ if [ ! -e app/build/outputs/apk/release/app-release.apk ]; then
 fi
 cp app/build/outputs/apk/release/app-release.apk "${zipdir}/webroot/s/Wizzeye.apk"
 cp app/build/outputs/apk/release/app-release.apk "${distdir}/Wizzeye-${version}.apk"
+
+echo ":: Building docker image"
+docker build -t "${dockerimg}:${version}" .
+docker tag "${dockerimg}:${version}" "${dockerimg}:latest"
 
 echo ":: Zipping package"
 ( cd "${distdir}" && zip -r "${zipdir##*/}.zip" ${zipdir##*/} )
