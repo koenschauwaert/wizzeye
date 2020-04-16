@@ -44,19 +44,19 @@ can import settings from a QR code.  The QR code should contain a UTF-8-encoded
 semicolon-separated list of `key=value` pairs.  The following table contains
 the recognized keys.
 
-Key             | Default value         | Description
-----------------|-----------------------|--------------------------------------
-`video_quality` | `NORMAL`              | Call quality (one of `LOW`, `NORMAL`, `HD`)
-`server`        | `https://wizzeye.app` | Signaling server
-`stun_hostname` | `stun.wizzeye.app`    | STUN server
-`turn_hostname` | *(empty)*             | TURN server
-`turn_username` | *(empty)*             | Username for the TURN server
-`turn_password` | *(empty)*             | Password for the TURN server
+Key             | Default value             | Description
+----------------|---------------------------|----------------------------------
+`video_quality` | `NORMAL`                  | Call quality (one of `LOW`, `NORMAL`, `HD`)
+`server`        | `https://wizzeye.app`     | Signaling server
+`stun_hostname` | `stun.l.google.com:19302` | STUN server
+`turn_hostname` | *(empty)*                 | TURN server
+`turn_username` | *(empty)*                 | Username for the TURN server
+`turn_password` | *(empty)*                 | Password for the TURN server
 
 For example, the following QR code data resets the settings to their default value:
 
 ```
-video_quality=NORMAL;server=https://wizzeye.app;stun_hostname=stun.wizzeye.app;turn_hostname=;turn_username=;turn_password=
+video_quality=NORMAL;server=https://wizzeye.app;stun_hostname=stun.l.google.com:19302;turn_hostname=;turn_username=;turn_password=
 ```
 
 
