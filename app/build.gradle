@@ -30,8 +30,8 @@ android {
         applicationId props.applicationId
         minSdkVersion 24
         targetSdkVersion 28
-        versionCode 5
-        versionName "1.3"
+        versionCode 6
+        versionName "1.3.1"
         manifestPlaceholders = [
             hostScheme: props.hostScheme,
             hostName: props.hostName,
